@@ -88,22 +88,22 @@ function NavItem({
     <Link
       href={item.href}
       onClick={onClick}
-      className={`flex items-center gap-[10px] w-full rounded-lg transition-colors ${
+      className={`flex items-center gap-[10px] md:gap-[10px] w-full rounded-lg transition-colors ${
         isActive
           ? "font-semibold"
           : "hover:bg-bg-hover"
       }`}
       style={{
-        padding: "7px 10px",
-        fontSize: "13.5px",
+        padding: "9px 12px",
+        fontSize: "15px",
         fontWeight: isActive ? 600 : 500,
         background: isActive ? "var(--c-nav-active-bg)" : undefined,
         color: isActive ? "var(--c-primary)" : "var(--c-text-2b)",
       }}
     >
       <Icon
-        width={17}
-        height={17}
+        width={19}
+        height={19}
         stroke="currentColor"
         strokeWidth={1.8}
         style={{ flexShrink: 0 }}
@@ -229,7 +229,7 @@ export function Sidebar() {
         </div>
 
         {/* Main nav */}
-        <nav className="flex flex-col flex-1" style={{ gap: "1px", marginTop: "2px" }}>
+        <nav className="flex flex-col flex-1 gap-[4px] md:gap-[1px]" style={{ marginTop: "2px" }}>
           {mainNavItems.map((item) => (
             <NavItem key={item.href} item={item} isActive={isActive(item.href)} onClick={close} />
           ))}
