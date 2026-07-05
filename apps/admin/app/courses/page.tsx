@@ -619,12 +619,12 @@ export default function CoursesPage() {
 
       {/* Grid */}
       <div className="flex-1 overflow-auto px-4 pb-6 sm:px-6 md:px-8 md:pb-10">
-        <div style={{ border: "1px solid var(--c-border)", borderRadius: "12px", overflow: "hidden", minWidth: "min-content", display: "inline-block" }}>
+        <div style={{ border: "1px solid var(--c-border)", borderRadius: "12px", overflow: "hidden", minWidth: "min-content" }}>
           {/* Header */}
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "44px 100px 220px 160px 90px 110px 90px 70px 60px 60px 130px 110px 100px",
+              gridTemplateColumns: "44px minmax(80px,1fr) minmax(180px,2.5fr) minmax(120px,1.5fr) minmax(70px,0.8fr) minmax(90px,1fr) minmax(70px,0.8fr) minmax(55px,0.6fr) minmax(50px,0.5fr) minmax(50px,0.5fr) minmax(90px,1fr) minmax(90px,1fr) minmax(80px,0.8fr)",
               background: "var(--c-bg-panel)",
               borderBottom: "1px solid var(--c-border)",
               position: "sticky",
@@ -663,7 +663,7 @@ export default function CoursesPage() {
               className="hover:bg-[#fafbfc]"
               style={{
                 display: "grid",
-                gridTemplateColumns: "44px 100px 220px 160px 90px 110px 90px 70px 60px 60px 130px 110px 100px",
+                gridTemplateColumns: "44px minmax(80px,1fr) minmax(180px,2.5fr) minmax(120px,1.5fr) minmax(70px,0.8fr) minmax(90px,1fr) minmax(70px,0.8fr) minmax(55px,0.6fr) minmax(50px,0.5fr) minmax(50px,0.5fr) minmax(90px,1fr) minmax(90px,1fr) minmax(80px,0.8fr)",
               }}
             >
               <div
