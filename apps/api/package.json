@@ -1,0 +1,14 @@
+{
+  "name": "@meridian/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "ts-node --esm src/main.ts",
+    "build": "echo 'API build placeholder'"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^20"
+  }
+}

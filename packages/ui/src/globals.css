@@ -1,0 +1,225 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-foreground: #ffffff;
+  --color-success: #16a34a;
+  --color-success-light: #ecfdf3;
+  --color-warning: #d97706;
+  --color-warning-light: #fffaeb;
+  --color-error: #dc2626;
+  --color-error-light: #fef2f2;
+  --color-ai: #7c3aed;
+  --color-ai-light: #f3e8ff;
+
+  --color-text-primary: #16181d;
+  --color-text-secondary: #3f3f46;
+  --color-text-tertiary: #71717a;
+  --color-text-muted: #a1a1aa;
+  --color-text-label: #8e8e93;
+
+  --color-border: #ececee;
+  --color-border-alt: #ededed;
+  --color-border-input: #e6e6e8;
+  --color-border-light: #f4f4f5;
+
+  --color-bg-main: #ffffff;
+  --color-bg-sidebar: #fbfbfa;
+  --color-bg-panel: #fafafa;
+  --color-bg-hover: #f8f8f8;
+  --color-bg-surface: #f4f4f5;
+
+  --radius-sm: 8px;
+  --radius-md: 9px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+:root {
+  --c-bg: #ffffff;
+  --c-bg-sidebar: #fbfbfa;
+  --c-bg-panel: #fafafa;
+  --c-bg-hover: #f8f8f8;
+  --c-bg-surface: #f4f4f5;
+  --c-bg-kanban: #f9f9f9;
+  --c-bg-elevated: #ffffff;
+  --c-bg-input: #fafafa;
+  --c-bg-bar-track: #f4f4f5;
+  --c-bg-progress-track: #f0f0f1;
+  --c-bg-grid-row: #fafafa;
+
+  --c-text-1: #16181d;
+  --c-text-2: #3f3f46;
+  --c-text-2b: #52525b;
+  --c-text-3: #71717a;
+  --c-text-4: #a1a1aa;
+  --c-text-4b: #9a9aa0;
+  --c-text-5: #adadb2;
+  --c-text-label: #8e8e93;
+  --c-text-soft: #27272a;
+  --c-text-row-num: #c4c4c8;
+  --c-text-slash: #d4d4d8;
+
+  --c-border: #ececee;
+  --c-border-alt: #ededed;
+  --c-border-input: #e6e6e8;
+  --c-border-light: #f4f4f5;
+  --c-border-grid: #f0f0f1;
+  --c-border-check: #d4d4d8;
+  --c-border-divider: #ececed;
+
+  --c-shadow: rgba(0,0,0,0.06);
+  --c-shadow-heavy: rgba(16,18,23,0.14);
+
+  --c-scrollbar: #e3e3e6;
+  --c-scrollbar-hover: #d0d0d4;
+  --c-scrollbar-bg: #fff;
+
+  /* Semantic chip backgrounds (light mode) */
+  --c-chip-info-bg: #eef4ff;
+  --c-chip-info-text: #2563eb;
+  --c-chip-success-bg: #ecfdf3;
+  --c-chip-success-text: #15803d;
+  --c-chip-error-bg: #fef3f2;
+  --c-chip-error-text: #dc2626;
+  --c-chip-warning-bg: #fffaeb;
+  --c-chip-warning-text: #d97706;
+  --c-chip-neutral-bg: #f4f4f5;
+  --c-chip-neutral-text: #71717a;
+  --c-chip-ai-bg: #f3e8ff;
+  --c-chip-ai-text: #7c3aed;
+
+  /* Header / overlay */
+  --c-header-bg: rgba(255,255,255,0.85);
+  --c-overlay: rgba(16,18,23,0.14);
+  --c-dropdown-bg: #ffffff;
+
+  /* Active nav */
+  --c-nav-active-bg: #eef4ff;
+  --c-nav-active-border: #dbeafe;
+
+  /* Kanban card */
+  --c-card-shadow: rgba(16,18,23,0.03);
+}
+
+.dark {
+  --c-bg: #0f1117;
+  --c-bg-sidebar: #111218;
+  --c-bg-panel: #16171f;
+  --c-bg-hover: #1a1c25;
+  --c-bg-surface: #1e2029;
+  --c-bg-kanban: #13141b;
+  --c-bg-elevated: #1a1c25;
+  --c-bg-input: #16171f;
+  --c-bg-bar-track: #1e2029;
+  --c-bg-progress-track: #1e2029;
+  --c-bg-grid-row: #16171f;
+
+  --c-text-1: #e4e4e7;
+  --c-text-2: #a1a1aa;
+  --c-text-2b: #8e8e93;
+  --c-text-3: #71717a;
+  --c-text-4: #52525b;
+  --c-text-4b: #52525b;
+  --c-text-5: #52525b;
+  --c-text-label: #636369;
+  --c-text-soft: #d4d4d8;
+  --c-text-row-num: #3f3f46;
+  --c-text-slash: #3f3f46;
+
+  --c-border: #27272a;
+  --c-border-alt: #27272a;
+  --c-border-input: #333338;
+  --c-border-light: #1e2029;
+  --c-border-grid: #27272a;
+  --c-border-check: #3f3f46;
+  --c-border-divider: #27272a;
+
+  --c-shadow: rgba(0,0,0,0.3);
+  --c-shadow-heavy: rgba(0,0,0,0.5);
+
+  --c-scrollbar: #333338;
+  --c-scrollbar-hover: #444449;
+  --c-scrollbar-bg: #0f1117;
+
+  --c-chip-info-bg: rgba(37,99,235,0.15);
+  --c-chip-info-text: #60a5fa;
+  --c-chip-success-bg: rgba(22,163,74,0.15);
+  --c-chip-success-text: #4ade80;
+  --c-chip-error-bg: rgba(220,38,38,0.15);
+  --c-chip-error-text: #f87171;
+  --c-chip-warning-bg: rgba(217,119,6,0.15);
+  --c-chip-warning-text: #fbbf24;
+  --c-chip-neutral-bg: #1e2029;
+  --c-chip-neutral-text: #71717a;
+  --c-chip-ai-bg: rgba(124,58,237,0.15);
+  --c-chip-ai-text: #a78bfa;
+
+  --c-header-bg: rgba(15,17,23,0.85);
+  --c-overlay: rgba(0,0,0,0.5);
+  --c-dropdown-bg: #1a1c25;
+
+  --c-nav-active-bg: rgba(37,99,235,0.15);
+  --c-nav-active-border: rgba(37,99,235,0.25);
+
+  --c-card-shadow: rgba(0,0,0,0.2);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  color: var(--c-text-1);
+  background: var(--c-bg);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--c-scrollbar);
+  border-radius: 8px;
+  border: 3px solid var(--c-scrollbar-bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--c-scrollbar-hover);
+}
+
+input, button, textarea {
+  font-family: inherit;
+}
+
+input:focus {
+  outline: none;
+}
+
+@keyframes fadeUp {
+  from { transform: translateY(6px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes drawerIn {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
