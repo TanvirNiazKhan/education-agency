@@ -25,7 +25,7 @@ const PROGRESS = 0.6;
 
 export default function DashboardPage() {
   return (
-    <main className="px-4 py-6 pb-16 lg:px-7 lg:py-8 lg:pb-[90px]" style={{ maxWidth: 1160, margin: "0 auto" }}>
+    <main className="px-4 py-6 pb-[120px] md:pb-16 lg:px-7 lg:py-8 lg:pb-[90px]" style={{ maxWidth: 1160, margin: "0 auto" }}>
       {/* ───── Top section ───── */}
       <div
         className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 mb-6"

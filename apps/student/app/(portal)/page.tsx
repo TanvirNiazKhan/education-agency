@@ -589,7 +589,7 @@ export default function HomePage() {
 
       {/* ───── CONTENT SECTIONS ───── */}
       <div
-        className="px-4 md:px-7 pb-[60px] md:pb-[90px]"
+        className="px-4 md:px-7 pb-[120px] md:pb-[90px]"
         style={{
           maxWidth: 1240,
           margin: "0 auto",

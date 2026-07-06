@@ -982,7 +982,7 @@ export default function UniversityDetailPage() {
   };
 
   return (
-    <div style={{ paddingBottom: 90 }}>
+    <div className="pb-[120px] md:pb-[90px]">
       {hero}
       {quickStats}
       {tabs}
@@ -1000,10 +1000,9 @@ export default function UniversityDetailPage() {
 
       {/* ─── Sticky bottom bar ─── */}
       <div
-        className="px-4 lg:px-7"
+        className="px-4 lg:px-7 bottom-[56px] md:bottom-0"
         style={{
           position: "fixed",
-          bottom: 0,
           left: 0,
           right: 0,
           zIndex: 55,

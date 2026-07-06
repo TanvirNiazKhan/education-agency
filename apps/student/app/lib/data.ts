@@ -170,6 +170,7 @@ export const TRACKER_STEPS = [
 export const NAV_ITEMS = [
   { label: "Home", href: "/" },
   { label: "Explore", href: "/search" },
+  { label: "Apply", href: "/apply" },
   { label: "Dashboard", href: "/dashboard" },
   { label: "Compare", href: "/compare" },
   { label: "AI Chat", href: "/chat" },
@@ -212,9 +213,33 @@ export const CHAT_TOPICS = [
 ];
 
 export const JOURNEY_STEPS = [
-  "Create profile", "Academic info", "English proficiency",
-  "Preferred countries", "Upload documents", "Review", "Submit",
+  "Your program", "About you", "Passport", "Your address",
+  "Emergency contact", "Education & English", "Work experience",
+  "Documents", "Review & submit",
 ];
+
+export const DOCS_REQUIRED = [
+  { name: "Passport", hint: "Bio page + contact details page." },
+  { name: "National ID (NID)", hint: "Both sides, clearly readable." },
+  { name: "Academic documents", hint: "Year 10 onward — all marksheets & completion certificates." },
+  { name: "English test result", hint: "IELTS or PTE result copy." },
+  { name: "Detailed résumé / CV", hint: "Your up-to-date CV." },
+  { name: "Legal guardian\u2019s NID", hint: "Your guardian\u2019s national ID." },
+  { name: "Statement of Purpose (SOP)", hint: "Why you chose this course and university." },
+];
+
+export const DOCS_OPTIONAL = [
+  { name: "Course outlines", hint: "Only if you\u2019re applying for credit transfer." },
+  { name: "Gap explanation", hint: "With supporting documents, if you have a study or work gap." },
+  { name: "Spouse documents", hint: "Passport, marriage certificate & academics, if applicable." },
+];
+
+export const INSTITUTIONS = ["CQUniversity Australia", "University of Melbourne", "University of Sydney", "Monash University", "University of Toronto", "University of Manchester"];
+export const CAMPUSES = ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide", "Rockhampton"];
+export const COURSE_LIST = ["Bachelor of Information Technology", "Master of Computer Science", "Master of Data Science", "Master of Business Administration", "Bachelor of Business", "Master of Engineering"];
+export const ALL_COUNTRIES = ["Bangladesh", "India", "Nepal", "Pakistan", "Sri Lanka", "Australia", "Canada", "United Kingdom", "United States", "Other"];
+export const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+export const YEARS_LIST = ["2025","2024","2023","2022","2021","2020","2019","2018","Earlier"];
 
 export const COUNTRIES_FILTER = [
   { key: "Australia", label: "Australia", count: 43, cities: ["Melbourne", "Sydney", "Brisbane", "Perth"] },

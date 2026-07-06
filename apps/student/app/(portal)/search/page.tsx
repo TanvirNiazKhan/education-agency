@@ -22,7 +22,7 @@ export default function SearchPage() {
   const engOptions = ["Any", "IELTS 6.0", "IELTS 6.5", "IELTS 7.0", "PTE 58"];
 
   return (
-    <main className="px-4 lg:px-7" style={{ maxWidth: 1240, margin: "0 auto", paddingTop: 30, paddingBottom: 90 }}>
+    <main className="px-4 lg:px-7 pb-[120px] md:pb-[90px]" style={{ maxWidth: 1240, margin: "0 auto", paddingTop: 30 }}>
       <h1
         className="text-xl lg:text-[28px]"
         style={{

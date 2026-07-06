@@ -5,7 +5,7 @@ import { TRACKER_STEPS } from "../../lib/data";
 
 export default function TrackerPage() {
   return (
-    <main className="px-4 py-6 pb-16 lg:px-7 lg:py-8 lg:pb-[90px]" style={{ maxWidth: 820, margin: "0 auto" }}>
+    <main className="px-4 py-6 pb-[120px] md:pb-16 lg:px-7 lg:py-8 lg:pb-[90px]" style={{ maxWidth: 820, margin: "0 auto" }}>
       {/* Header */}
       <h1
         className="text-2xl lg:text-[30px]"

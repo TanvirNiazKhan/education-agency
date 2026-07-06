@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, LayoutDashboard, GitCompareArrows, MessageCircle } from "lucide-react";
+import { Home, Search, LayoutDashboard, GitCompareArrows, FileText, MessageCircle } from "lucide-react";
 
 const TABS = [
   { label: "Home", href: "/", icon: Home },
   { label: "Explore", href: "/search", icon: Search },
+  { label: "Apply", href: "/apply", icon: FileText },
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Compare", href: "/compare", icon: GitCompareArrows },
   { label: "AI Chat", href: "/chat", icon: MessageCircle },
