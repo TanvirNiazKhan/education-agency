@@ -81,7 +81,7 @@ export default function UniversitiesPage() {
             <div
               key={u.id}
               onClick={() => { setActiveId(u.id); setActiveTab("Overview"); }}
-              className="flex items-center cursor-pointer hover:bg-bg-hover"
+              className="flex items-center cursor-pointer hoverable"
               style={{
                 gap: "11px",
                 padding: "9px 11px",
@@ -259,7 +259,7 @@ export default function UniversitiesPage() {
                 {uniCourses.map((c, i) => (
                   <div
                     key={i}
-                    className="hover:bg-[#fafafa]"
+                    className="hoverable"
                     style={{
                       display: "grid",
                       gridTemplateColumns: "2fr 100px 90px 120px 70px 110px",
@@ -308,7 +308,7 @@ export default function UniversitiesPage() {
                 { title: "Financial Requirements", body: "Proof of funds covering first year tuition + A$21,041 living costs. GTE statement required for visa." },
               ].map((r) => (
                 <div key={r.title} style={{ border: "1px solid var(--c-border)", borderRadius: "12px", overflow: "hidden" }}>
-                  <div className="flex items-center justify-between cursor-pointer hover:bg-[#fafafa]" style={{ padding: "13px 16px" }}>
+                  <div className="flex items-center justify-between cursor-pointer hoverable" style={{ padding: "13px 16px" }}>
                     <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--c-text-1)" }}>{r.title}</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--c-text-4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
                   </div>
@@ -378,7 +378,7 @@ export default function UniversitiesPage() {
                       <div style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#2563eb", border: "2px solid var(--c-bg-elevated)", boxShadow: "0 0 0 1.5px var(--c-nav-active-border)" }} />
                       <div style={{ width: "1.5px", flex: 1, background: "var(--c-border)", minHeight: "34px" }} />
                     </div>
-                    <div className="flex-1 cursor-pointer hover:bg-[#fafafa]" style={{ border: "1px solid var(--c-border)", borderRadius: "12px", padding: "13px 15px", marginBottom: "6px" }}>
+                    <div className="flex-1 cursor-pointer hoverable" style={{ border: "1px solid var(--c-border)", borderRadius: "12px", padding: "13px 15px", marginBottom: "6px" }}>
                       <div className="flex items-center justify-between">
                         <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--c-text-1)" }}>{intake.month} 2026</span>
                         <span style={statusStyle}>{intake.status}</span>

@@ -431,7 +431,7 @@ export default function ApplicationsPage() {
                 return (
                   <div
                     key={`${col.stage}-${ci}`}
-                    className="hover:bg-[#fafafa] cursor-pointer"
+                    className="hoverable cursor-pointer"
                     style={{
                       display: "grid",
                       gridTemplateColumns: "minmax(180px,1.3fr) 150px 120px 96px 150px 130px",

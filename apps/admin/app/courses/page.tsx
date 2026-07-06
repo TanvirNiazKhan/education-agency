@@ -501,7 +501,7 @@ export default function CoursesPage() {
             <div className="relative">
               <button
                 onClick={() => setUniMenuOpen(!uniMenuOpen)}
-                className="flex items-center cursor-pointer hover:bg-[#fafafa]"
+                className="flex items-center cursor-pointer hoverable"
                 style={{ gap: "9px", height: "36px", padding: "0 11px", border: "1px solid var(--c-border-input)", borderRadius: "10px", background: "var(--c-bg-elevated)" }}
               >
                 <div
@@ -527,7 +527,7 @@ export default function CoursesPage() {
                       <div
                         key={i}
                         onClick={() => { setSelectedUni(i); setUniMenuOpen(false); }}
-                        className="flex items-center cursor-pointer hover:bg-[#fafafa]"
+                        className="flex items-center cursor-pointer hoverable"
                         style={{ gap: "10px", padding: "8px 10px", borderRadius: "8px", background: i === selectedUni ? "var(--c-nav-active-bg)" : "transparent" }}
                       >
                         <div
@@ -554,7 +554,7 @@ export default function CoursesPage() {
             <div className="relative">
               <button
                 onClick={() => setFieldMenuOpen(!fieldMenuOpen)}
-                className="flex items-center cursor-pointer hover:bg-[#fafafa]"
+                className="flex items-center cursor-pointer hoverable"
                 style={{ gap: "8px", height: "36px", padding: "0 12px", border: "1px solid var(--c-border-input)", borderRadius: "10px", background: "var(--c-bg-elevated)" }}
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -574,7 +574,7 @@ export default function CoursesPage() {
                       <div
                         key={f}
                         onClick={() => { setSelectedField(f); setFieldMenuOpen(false); }}
-                        className="flex items-center justify-between cursor-pointer hover:bg-[#fafafa]"
+                        className="flex items-center justify-between cursor-pointer hoverable"
                         style={{ padding: "8px 10px", borderRadius: "8px", background: f === selectedField ? "var(--c-nav-active-bg)" : "transparent" }}
                       >
                         <span style={{ fontSize: "12.5px", fontWeight: 500, color: "var(--c-text-1)" }}>{f}</span>
@@ -660,7 +660,7 @@ export default function CoursesPage() {
           {filtered.map((row, ri) => (
             <div
               key={ri}
-              className="hover:bg-[#fafbfc]"
+              className="hoverable"
               style={{
                 display: "grid",
                 gridTemplateColumns: "44px minmax(80px,1fr) minmax(180px,2.5fr) minmax(120px,1.5fr) minmax(70px,0.8fr) minmax(90px,1fr) minmax(70px,0.8fr) minmax(55px,0.6fr) minmax(50px,0.5fr) minmax(50px,0.5fr) minmax(90px,1fr) minmax(90px,1fr) minmax(80px,0.8fr)",
@@ -708,7 +708,7 @@ export default function CoursesPage() {
           {/* Add row */}
           <div
             onClick={() => setDrawerOpen(true)}
-            className="flex items-center cursor-pointer hover:bg-[#fafafa]"
+            className="flex items-center cursor-pointer hoverable"
             style={{ gap: "8px", height: "38px", padding: "0 14px", background: "var(--c-bg-elevated)", color: "var(--c-text-4)", fontSize: "12.5px" }}
           >
             <Plus width={14} height={14} strokeWidth={2} />

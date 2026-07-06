@@ -209,6 +209,14 @@ input:focus {
   outline: none;
 }
 
+.nav-item:hover {
+  background: var(--c-bg-hover);
+}
+
+.hoverable:hover {
+  background: var(--c-bg-hover);
+}
+
 @keyframes fadeUp {
   from { transform: translateY(6px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }

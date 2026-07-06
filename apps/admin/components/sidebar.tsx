@@ -88,17 +88,13 @@ function NavItem({
     <Link
       href={item.href}
       onClick={onClick}
-      className={`flex items-center gap-[10px] md:gap-[10px] w-full rounded-lg transition-colors ${
-        isActive
-          ? "font-semibold"
-          : "hover:bg-bg-hover"
-      }`}
+      className="flex items-center gap-[10px] md:gap-[10px] w-full rounded-lg transition-colors font-semibold nav-item"
       style={{
         padding: "9px 12px",
         fontSize: "15px",
         fontWeight: isActive ? 600 : 500,
         background: isActive ? "var(--c-nav-active-bg)" : undefined,
-        color: isActive ? "var(--c-primary)" : "var(--c-text-2b)",
+        color: isActive ? "#2563eb" : "var(--c-text-2)",
       }}
     >
       <Icon
@@ -270,7 +266,7 @@ export function Sidebar() {
             marginTop: "6px",
           }}
         >
-          <div className="flex items-center gap-[10px] cursor-pointer hover:bg-bg-hover rounded-lg transition-colors"
+          <div className="flex items-center gap-[10px] cursor-pointer nav-item rounded-lg transition-colors"
             style={{ padding: "6px 8px" }}
           >
             <div
