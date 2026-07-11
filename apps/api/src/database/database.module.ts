@@ -17,6 +17,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         autoLoadEntities: true,
         synchronize: configService.get<boolean>('database.synchronize'),
         logging: configService.get<boolean>('database.logging'),
+        ssl: configService.get('database.ssl'),
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         migrationsRun: false,
       }),
