@@ -1,0 +1,15 @@
+export const filterBtnStyle: React.CSSProperties = {
+  height: "30px",
+  display: "flex",
+  alignItems: "center",
+  gap: "5px",
+  padding: "0 10px",
+  border: "1px solid var(--c-border-input)",
+  borderRadius: "8px",
+  background: "var(--c-bg-elevated)",
+  color: "var(--c-text-2)",
+  fontSize: "12.5px",
+  fontWeight: 500,
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+};

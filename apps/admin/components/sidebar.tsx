@@ -10,6 +10,9 @@ import {
   BookOpen,
   Award,
   Globe,
+  MapPin,
+  Layers,
+  FlaskConical,
   Brain,
   FileText,
   CheckSquare,
@@ -35,6 +38,9 @@ const mainNavItems = [
   { label: "Courses", href: "/courses", icon: BookOpen },
   { label: "Scholarships", href: "/scholarships", icon: Award },
   { label: "Countries", href: "/countries", icon: Globe },
+  { label: "Cities", href: "/cities", icon: MapPin },
+  { label: "Degrees", href: "/degrees", icon: Layers },
+  { label: "Faculties", href: "/faculties", icon: FlaskConical },
 ];
 
 const workspaceNavItems = [

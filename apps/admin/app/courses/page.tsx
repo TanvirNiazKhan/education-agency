@@ -1,728 +1,395 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, ChevronDown, Check, X } from "lucide-react";
-
-const columns = ["Degree", "Program", "Faculty", "Duration", "Annual Tuition", "App Fee", "IELTS", "PTE", "GRE", "Scholarship", "Deadline", "Status"];
-
-const defaultCourseRows = [
-  ["Master", "MSc Data Science", "Engineering & IT", "2 yrs", "A$48,000", "A$100", "6.5", "58", "—", "Yes", "31 Aug 2026", "Open"],
-  ["Master", "Master of Engineering", "Engineering & IT", "2 yrs", "A$46,400", "A$100", "6.5", "58", "—", "Yes", "31 Aug 2026", "Open"],
-  ["Bachelor", "Bachelor of Commerce", "Business & Economics", "3 yrs", "A$44,000", "A$100", "6.5", "58", "—", "No", "30 Sep 2026", "Open"],
-  ["Master", "Master of IT", "Engineering & IT", "2 yrs", "A$47,200", "A$100", "6.5", "58", "—", "Yes", "31 Aug 2026", "Open"],
-  ["PhD", "PhD Computer Science", "Engineering & IT", "3-4 yrs", "A$42,800", "Waived", "7.0", "65", "—", "Yes", "31 Oct 2026", "Open"],
-  ["Master", "MSc Finance", "Business & Economics", "1.5 yrs", "A$49,200", "A$100", "7.0", "65", "—", "Yes", "15 Sep 2026", "Closing"],
-  ["Bachelor", "BSc Computer Science", "Engineering & IT", "3 yrs", "A$46,000", "A$100", "6.5", "58", "—", "No", "30 Sep 2026", "Open"],
-  ["Master", "MA International Relations", "Arts & Humanities", "2 yrs", "A$38,400", "A$100", "7.0", "65", "—", "No", "31 Aug 2026", "Open"],
-  ["Diploma", "Graduate Diploma Education", "Arts & Humanities", "1 yr", "A$34,800", "A$75", "7.5", "73", "—", "No", "30 Jun 2026", "Closed"],
-  ["Master", "Master of Architecture", "Design", "3 yrs", "A$44,800", "A$100", "6.5", "58", "—", "Yes", "15 Sep 2026", "Draft"],
-];
-
-const uniOptions = [
-  { name: "University of Melbourne", init: "UM", city: "Melbourne", country: "Australia", color: "#2563eb", courses: 12 },
-  { name: "University of Toronto", init: "UT", city: "Toronto", country: "Canada", color: "#7c3aed", courses: 9 },
-  { name: "University College London", init: "UCL", city: "London", country: "United Kingdom", color: "#0891b2", courses: 14 },
-  { name: "University of Sydney", init: "US", city: "Sydney", country: "Australia", color: "#ea580c", courses: 11 },
-  { name: "TU Munich", init: "TUM", city: "Munich", country: "Germany", color: "#16a34a", courses: 8 },
-];
-
-const fieldOptions = ["All fields", "Engineering & IT", "Business & Economics", "Science", "Law", "Design", "Health & Medicine", "Arts & Humanities"];
-const degreeOptions = ["Bachelor", "Master", "PhD", "Diploma"];
-const statusOptions = ["Open", "Closing", "Draft", "Closed"];
-const facultyOptions = fieldOptions.filter((f) => f !== "All fields");
-
-const filterBtnStyle: React.CSSProperties = {
-  height: "30px",
-  display: "flex",
-  alignItems: "center",
-  gap: "5px",
-  padding: "0 10px",
-  border: "1px solid var(--c-border-input)",
-  borderRadius: "8px",
-  background: "var(--c-bg-elevated)",
-  color: "var(--c-text-2)",
-  fontSize: "12.5px",
-  fontWeight: 500,
-  cursor: "pointer",
-  whiteSpace: "nowrap",
-};
-
-const gridToolStyle: React.CSSProperties = {
-  ...filterBtnStyle,
-  height: "28px",
-  fontSize: "12px",
-  gap: "4px",
-};
-
-function StatusChip({ status }: { status: string }) {
-  const style =
-    status === "Open"
-      ? { fontSize: "11px", fontWeight: 600, color: "#059669", background: "#ecfdf3", padding: "2px 8px", borderRadius: "20px" }
-      : status === "Closing"
-      ? { fontSize: "11px", fontWeight: 600, color: "#b45309", background: "#fffaeb", padding: "2px 8px", borderRadius: "20px" }
-      : status === "Draft"
-      ? { fontSize: "11px", fontWeight: 600, color: "#a1a1aa", background: "#f4f4f5", padding: "2px 8px", borderRadius: "20px" }
-      : { fontSize: "11px", fontWeight: 600, color: "#dc2626", background: "#fef3f2", padding: "2px 8px", borderRadius: "20px" };
-  return <span style={style}>{status}</span>;
-}
-
-/* ── Form field styles ────────────────────────────────── */
-
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: "12px",
-  fontWeight: 600,
-  color: "var(--c-text-2)",
-  marginBottom: "6px",
-};
+import { useState, useEffect, useCallback } from "react";
+import { Plus, Pencil, Trash2, X, Loader2, ChevronDown, Check } from "lucide-react";
+import { coursesApi, facultiesApi, degreesApi, type Course, type Faculty, type Degree, type CreateCourseData } from "@/lib/api";
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  height: "36px",
-  padding: "0 11px",
+  height: "38px",
+  padding: "0 12px",
+  fontSize: "13px",
   border: "1px solid var(--c-border-input)",
   borderRadius: "9px",
-  background: "var(--c-bg-input)",
+  background: "var(--c-bg-elevated)",
   color: "var(--c-text-1)",
-  fontSize: "13px",
+  outline: "none",
 };
 
-const selectStyle: React.CSSProperties = {
+const labelStyle: React.CSSProperties = {
+  fontSize: "12px",
+  fontWeight: 600,
+  color: "var(--c-text-3)",
+  marginBottom: "5px",
+  display: "block",
+};
+
+const textareaStyle: React.CSSProperties = {
   ...inputStyle,
-  appearance: "none",
-  backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-  backgroundRepeat: "no-repeat",
-  backgroundPosition: "right 10px center",
-  paddingRight: "30px",
+  height: "80px",
+  padding: "10px 12px",
+  resize: "vertical" as const,
 };
 
-interface CourseForm {
-  degree: string;
-  program: string;
-  faculty: string;
-  duration: string;
-  tuition: string;
-  appFee: string;
-  ielts: string;
-  pte: string;
-  gre: string;
-  scholarship: string;
-  deadline: string;
-  status: string;
+interface FormData {
+  name: string;
+  course_code: string;
+  tuition_fee: string;
+  currency: string;
+  duration_months: string;
+  faculty_id: string;
+  degree_id: string;
+  intake: string;
+  ielts_requirement: string;
+  pte_requirement: string;
+  toefl_requirement: string;
+  overview: string;
+  scholarship_available: boolean;
 }
 
-const emptyForm: CourseForm = {
-  degree: "Master",
-  program: "",
-  faculty: "Engineering & IT",
-  duration: "",
-  tuition: "",
-  appFee: "",
-  ielts: "",
-  pte: "",
-  gre: "",
-  scholarship: "No",
-  deadline: "",
-  status: "Draft",
+const emptyForm: FormData = {
+  name: "", course_code: "", tuition_fee: "", currency: "AUD", duration_months: "",
+  faculty_id: "", degree_id: "", intake: "", ielts_requirement: "", pte_requirement: "",
+  toefl_requirement: "", overview: "", scholarship_available: false,
 };
 
-/* ── Add Course Drawer ────────────────────────────────── */
-
-function AddCourseDrawer({
-  open,
-  onClose,
-  onAdd,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onAdd: (row: string[]) => void;
+function Picker({ label, value, options, onSelect, placeholder, renderOption }: {
+  label: string;
+  value: string;
+  options: { id: string; label: string; sub?: string }[];
+  onSelect: (id: string) => void;
+  placeholder: string;
+  renderOption?: (o: { id: string; label: string; sub?: string }) => React.ReactNode;
 }) {
-  const [form, setForm] = useState<CourseForm>(emptyForm);
-  const [errors, setErrors] = useState<Partial<Record<keyof CourseForm, boolean>>>({});
-
-  function set<K extends keyof CourseForm>(key: K, value: string) {
-    setForm((f) => ({ ...f, [key]: value }));
-    setErrors((e) => ({ ...e, [key]: false }));
-  }
-
-  function handleSubmit() {
-    const required: (keyof CourseForm)[] = ["program", "duration", "tuition"];
-    const next: typeof errors = {};
-    for (const k of required) if (!form[k].trim()) next[k] = true;
-    if (Object.keys(next).length) {
-      setErrors(next);
-      return;
-    }
-    onAdd([
-      form.degree,
-      form.program,
-      form.faculty,
-      form.duration,
-      form.tuition,
-      form.appFee || "—",
-      form.ielts || "—",
-      form.pte || "—",
-      form.gre || "—",
-      form.scholarship,
-      form.deadline || "—",
-      form.status,
-    ]);
-    setForm(emptyForm);
-    setErrors({});
-    onClose();
-  }
-
-  if (!open) return null;
-
+  const [open, setOpen] = useState(false);
+  const selected = options.find((o) => o.id === value);
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-50"
-        style={{ background: "var(--c-overlay)", animation: "overlayIn 0.15s ease" }}
-        onClick={onClose}
-      />
-
-      {/* Drawer */}
-      <div
-        className="fixed inset-y-0 right-0 z-50 flex flex-col w-full sm:w-[420px]"
-        style={{
-          background: "var(--c-bg-elevated)",
-          borderLeft: "1px solid var(--c-border)",
-          boxShadow: "-8px 0 30px var(--c-shadow-heavy)",
-          animation: "drawerIn 0.2s ease",
-        }}
-      >
-        {/* Header */}
-        <div
-          className="flex items-center justify-between shrink-0"
-          style={{
-            padding: "18px 20px",
-            borderBottom: "1px solid var(--c-border)",
-          }}
-        >
-          <div>
-            <h2 style={{ margin: 0, fontSize: "16px", fontWeight: 600, color: "var(--c-text-1)" }}>
-              Add Course
-            </h2>
-            <p style={{ margin: "3px 0 0", fontSize: "12px", color: "var(--c-text-3)" }}>
-              Fill in course details below
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="flex items-center justify-center cursor-pointer"
-            style={{
-              width: "30px",
-              height: "30px",
-              border: "1px solid var(--c-border-input)",
-              borderRadius: "8px",
-              background: "var(--c-bg-elevated)",
-              color: "var(--c-text-4)",
-            }}
-          >
-            <X width={16} height={16} strokeWidth={2} />
-          </button>
-        </div>
-
-        {/* Form body */}
-        <div className="flex-1 overflow-y-auto" style={{ padding: "20px" }}>
-          <div className="flex flex-col" style={{ gap: "16px" }}>
-            {/* Row: Degree + Status */}
-            <div className="grid grid-cols-2" style={{ gap: "12px" }}>
-              <div>
-                <label style={labelStyle}>Degree</label>
-                <select
-                  value={form.degree}
-                  onChange={(e) => set("degree", e.target.value)}
-                  style={selectStyle}
-                >
-                  {degreeOptions.map((d) => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label style={labelStyle}>Status</label>
-                <select
-                  value={form.status}
-                  onChange={(e) => set("status", e.target.value)}
-                  style={selectStyle}
-                >
-                  {statusOptions.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Program */}
-            <div>
-              <label style={labelStyle}>
-                Program name <span style={{ color: "#dc2626" }}>*</span>
-              </label>
-              <input
-                value={form.program}
-                onChange={(e) => set("program", e.target.value)}
-                placeholder="e.g. MSc Data Science"
-                style={{
-                  ...inputStyle,
-                  borderColor: errors.program ? "#dc2626" : undefined,
-                }}
-              />
-              {errors.program && (
-                <span style={{ fontSize: "11px", color: "#dc2626", marginTop: "4px", display: "block" }}>
-                  Program name is required
-                </span>
-              )}
-            </div>
-
-            {/* Faculty */}
-            <div>
-              <label style={labelStyle}>Faculty</label>
-              <select
-                value={form.faculty}
-                onChange={(e) => set("faculty", e.target.value)}
-                style={selectStyle}
-              >
-                {facultyOptions.map((f) => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Row: Duration + Deadline */}
-            <div className="grid grid-cols-2" style={{ gap: "12px" }}>
-              <div>
-                <label style={labelStyle}>
-                  Duration <span style={{ color: "#dc2626" }}>*</span>
-                </label>
-                <input
-                  value={form.duration}
-                  onChange={(e) => set("duration", e.target.value)}
-                  placeholder="e.g. 2 yrs"
-                  style={{
-                    ...inputStyle,
-                    borderColor: errors.duration ? "#dc2626" : undefined,
-                  }}
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>Deadline</label>
-                <input
-                  value={form.deadline}
-                  onChange={(e) => set("deadline", e.target.value)}
-                  placeholder="e.g. 31 Aug 2026"
-                  style={inputStyle}
-                />
-              </div>
-            </div>
-
-            {/* Separator */}
-            <div style={{ height: "1px", background: "var(--c-border)", margin: "2px 0" }} />
-
-            {/* Fees section */}
-            <div>
-              <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--c-text-3)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "12px" }}>
-                Fees
-              </div>
-              <div className="grid grid-cols-2" style={{ gap: "12px" }}>
-                <div>
-                  <label style={labelStyle}>
-                    Annual Tuition <span style={{ color: "#dc2626" }}>*</span>
-                  </label>
-                  <input
-                    value={form.tuition}
-                    onChange={(e) => set("tuition", e.target.value)}
-                    placeholder="e.g. A$48,000"
-                    style={{
-                      ...inputStyle,
-                      borderColor: errors.tuition ? "#dc2626" : undefined,
-                    }}
-                  />
+    <div style={{ marginBottom: "16px" }}>
+      <label style={labelStyle}>{label}</label>
+      <div className="relative">
+        <button onClick={() => setOpen(!open)} className="flex items-center justify-between cursor-pointer" style={{ ...inputStyle, display: "flex" }}>
+          <span style={{ color: selected ? "var(--c-text-1)" : "var(--c-text-4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {selected ? selected.label : placeholder}
+          </span>
+          <ChevronDown width={14} height={14} stroke="var(--c-text-4)" strokeWidth={2} style={{ flexShrink: 0 }} />
+        </button>
+        {open && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+            <div className="absolute z-50" style={{ top: "42px", left: 0, right: 0, maxHeight: "220px", overflowY: "auto", background: "var(--c-dropdown-bg)", border: "1px solid var(--c-border)", borderRadius: "10px", boxShadow: "var(--c-shadow-heavy)", padding: "4px" }}>
+              {options.map((o) => (
+                <div key={o.id} onClick={() => { onSelect(o.id); setOpen(false); }} className="flex items-center justify-between cursor-pointer hoverable"
+                  style={{ padding: "8px 10px", borderRadius: "7px", background: value === o.id ? "var(--c-nav-active-bg)" : "transparent" }}>
+                  {renderOption ? renderOption(o) : (
+                    <div>
+                      <div style={{ fontSize: "13px", fontWeight: 500, color: "var(--c-text-1)" }}>{o.label}</div>
+                      {o.sub && <div style={{ fontSize: "11px", color: "var(--c-text-4)" }}>{o.sub}</div>}
+                    </div>
+                  )}
+                  {value === o.id && <Check width={14} height={14} stroke="#2563eb" strokeWidth={2.4} style={{ flexShrink: 0 }} />}
                 </div>
-                <div>
-                  <label style={labelStyle}>Application Fee</label>
-                  <input
-                    value={form.appFee}
-                    onChange={(e) => set("appFee", e.target.value)}
-                    placeholder="e.g. A$100"
-                    style={inputStyle}
-                  />
-                </div>
-              </div>
+              ))}
+              {options.length === 0 && <div style={{ padding: "12px 10px", fontSize: "13px", color: "var(--c-text-4)", textAlign: "center" }}>None available</div>}
             </div>
-
-            {/* Separator */}
-            <div style={{ height: "1px", background: "var(--c-border)", margin: "2px 0" }} />
-
-            {/* Test scores section */}
-            <div>
-              <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--c-text-3)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "12px" }}>
-                Test Score Requirements
-              </div>
-              <div className="grid grid-cols-3" style={{ gap: "12px" }}>
-                <div>
-                  <label style={labelStyle}>IELTS</label>
-                  <input
-                    value={form.ielts}
-                    onChange={(e) => set("ielts", e.target.value)}
-                    placeholder="e.g. 6.5"
-                    style={inputStyle}
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>PTE</label>
-                  <input
-                    value={form.pte}
-                    onChange={(e) => set("pte", e.target.value)}
-                    placeholder="e.g. 58"
-                    style={inputStyle}
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>GRE</label>
-                  <input
-                    value={form.gre}
-                    onChange={(e) => set("gre", e.target.value)}
-                    placeholder="e.g. 310"
-                    style={inputStyle}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Scholarship toggle */}
-            <div>
-              <label style={labelStyle}>Scholarship available</label>
-              <div className="flex" style={{ gap: "6px" }}>
-                {["Yes", "No"].map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => set("scholarship", opt)}
-                    className="cursor-pointer"
-                    style={{
-                      height: "34px",
-                      padding: "0 18px",
-                      border: "1px solid",
-                      borderColor: form.scholarship === opt ? "#2563eb" : "var(--c-border-input)",
-                      borderRadius: "8px",
-                      background: form.scholarship === opt ? "var(--c-chip-info-bg)" : "var(--c-bg-elevated)",
-                      color: form.scholarship === opt ? "#2563eb" : "var(--c-text-2)",
-                      fontSize: "13px",
-                      fontWeight: form.scholarship === opt ? 600 : 500,
-                    }}
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div
-          className="flex items-center justify-end shrink-0"
-          style={{
-            gap: "10px",
-            padding: "14px 20px",
-            borderTop: "1px solid var(--c-border)",
-          }}
-        >
-          <button
-            onClick={onClose}
-            className="cursor-pointer"
-            style={{
-              height: "36px",
-              padding: "0 16px",
-              border: "1px solid var(--c-border-input)",
-              borderRadius: "9px",
-              background: "var(--c-bg-elevated)",
-              color: "var(--c-text-2)",
-              fontSize: "13px",
-              fontWeight: 550,
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="cursor-pointer"
-            style={{
-              height: "36px",
-              padding: "0 20px",
-              border: "none",
-              borderRadius: "9px",
-              background: "#2563eb",
-              color: "#fff",
-              fontSize: "13px",
-              fontWeight: 550,
-              boxShadow: "0 1px 2px rgba(37,99,235,0.25)",
-            }}
-          >
-            Add Course
-          </button>
-        </div>
+          </>
+        )}
       </div>
-    </>
+    </div>
   );
 }
 
-/* ── Main Page ────────────────────────────────────────── */
-
 export default function CoursesPage() {
-  const [selectedUni, setSelectedUni] = useState(0);
-  const [selectedField, setSelectedField] = useState("All fields");
-  const [uniMenuOpen, setUniMenuOpen] = useState(false);
-  const [fieldMenuOpen, setFieldMenuOpen] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [faculties, setFaculties] = useState<Faculty[]>([]);
+  const [degrees, setDegrees] = useState<Degree[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterFaculty, setFilterFaculty] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [courseRows, setCourseRows] = useState(defaultCourseRows);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<FormData>(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const uni = uniOptions[selectedUni];
-  const filtered = selectedField === "All fields" ? courseRows : courseRows.filter((r) => r[2] === selectedField);
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [courseData, facultyData, degreeData] = await Promise.all([
+        coursesApi.list(filterFaculty || undefined),
+        facultiesApi.list(),
+        degreesApi.list(),
+      ]);
+      setCourses(courseData);
+      setFaculties(facultyData);
+      setDegrees(degreeData);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to load");
+    } finally { setLoading(false); }
+  }, [filterFaculty]);
 
-  function handleAddCourse(row: string[]) {
-    setCourseRows((prev) => [...prev, row]);
+  useEffect(() => { load(); }, [load]);
+
+  const selectedFilterFaculty = faculties.find((f) => f.id === filterFaculty);
+
+  function openCreate() { setEditingId(null); setForm(emptyForm); setDrawerOpen(true); }
+  function openEdit(c: Course) {
+    setEditingId(c.id);
+    setForm({
+      name: c.name, course_code: c.course_code, tuition_fee: String(c.tuition_fee),
+      currency: c.currency, duration_months: String(c.duration_months),
+      faculty_id: c.faculty_id, degree_id: c.degree_id, intake: c.intake || "",
+      ielts_requirement: c.ielts_requirement != null ? String(c.ielts_requirement) : "",
+      pte_requirement: c.pte_requirement != null ? String(c.pte_requirement) : "",
+      toefl_requirement: c.toefl_requirement != null ? String(c.toefl_requirement) : "",
+      overview: c.overview || "", scholarship_available: c.scholarship_available,
+    });
+    setDrawerOpen(true);
   }
 
+  async function handleSave() {
+    if (!form.name || !form.course_code || !form.tuition_fee || !form.faculty_id || !form.degree_id || !form.duration_months) return;
+    setSaving(true);
+    try {
+      const data: CreateCourseData = {
+        name: form.name,
+        course_code: form.course_code,
+        tuition_fee: parseFloat(form.tuition_fee),
+        currency: form.currency,
+        duration_months: parseInt(form.duration_months, 10),
+        faculty_id: form.faculty_id,
+        degree_id: form.degree_id,
+        scholarship_available: form.scholarship_available,
+        ...(form.intake && { intake: form.intake }),
+        ...(form.ielts_requirement && { ielts_requirement: parseFloat(form.ielts_requirement) }),
+        ...(form.pte_requirement && { pte_requirement: parseFloat(form.pte_requirement) }),
+        ...(form.toefl_requirement && { toefl_requirement: parseFloat(form.toefl_requirement) }),
+        ...(form.overview && { overview: form.overview }),
+      };
+      if (editingId) await coursesApi.update(editingId, data);
+      else await coursesApi.create(data);
+      setDrawerOpen(false);
+      await load();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to save");
+    } finally { setSaving(false); }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this course?")) return;
+    try { await coursesApi.delete(id); await load(); }
+    catch (e: unknown) { setError(e instanceof Error ? e.message : "Failed to delete"); }
+  }
+
+  function getFacultyName(id: string) { return faculties.find((f) => f.id === id)?.name || "—"; }
+  function getDegreeName(id: string) { return degrees.find((d) => d.id === id)?.name || "—"; }
+
+  const canSave = form.name && form.course_code && form.tuition_fee && form.faculty_id && form.degree_id && form.duration_months;
+
+  const facultyOptions = faculties.map((f) => ({ id: f.id, label: f.name, sub: f.university?.name }));
+  const degreeOptions = degrees.map((d) => ({ id: d.id, label: d.name }));
+
   return (
-    <div className="flex flex-col h-full" style={{ animation: "fadeUp 0.28s ease" }}>
-      <div className="px-4 pt-4 pb-3 sm:px-6 sm:pt-5 md:px-8" style={{ flexShrink: 0 }}>
-        {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" style={{ marginBottom: "14px" }}>
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <h1 style={{ margin: 0, fontSize: "20px", fontWeight: 600, letterSpacing: "-0.025em", color: "var(--c-text-1)" }}>
-              Course Editor
-            </h1>
-
-            {/* University selector */}
-            <div className="relative">
-              <button
-                onClick={() => setUniMenuOpen(!uniMenuOpen)}
-                className="flex items-center cursor-pointer hoverable"
-                style={{ gap: "9px", height: "36px", padding: "0 11px", border: "1px solid var(--c-border-input)", borderRadius: "10px", background: "var(--c-bg-elevated)" }}
-              >
-                <div
-                  className="flex items-center justify-center"
-                  style={{ width: "26px", height: "26px", borderRadius: "7px", background: uni.color + "18", color: uni.color, fontSize: "9.5px", fontWeight: 700 }}
-                >
-                  {uni.init}
-                </div>
-                <div style={{ textAlign: "left", lineHeight: 1.15 }}>
-                  <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--c-text-1)" }}>{uni.name}</div>
-                  <div style={{ fontSize: "11px", color: "var(--c-text-4)" }}>{uni.courses} courses</div>
-                </div>
-                <ChevronDown width={14} height={14} stroke="var(--c-text-4)" strokeWidth={2} style={{ marginLeft: "2px" }} />
-              </button>
-              {uniMenuOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setUniMenuOpen(false)} />
-                  <div className="absolute z-41" style={{ top: "42px", left: 0, width: "284px", background: "var(--c-dropdown-bg)", border: "1px solid var(--c-border)", borderRadius: "12px", boxShadow: "var(--c-shadow-heavy)", padding: "6px", zIndex: 41 }}>
-                    <div style={{ fontSize: "10.5px", fontWeight: 600, color: "var(--c-text-5)", letterSpacing: "0.04em", textTransform: "uppercase", padding: "8px 10px 6px" }}>
-                      Select university
-                    </div>
-                    {uniOptions.map((u, i) => (
-                      <div
-                        key={i}
-                        onClick={() => { setSelectedUni(i); setUniMenuOpen(false); }}
-                        className="flex items-center cursor-pointer hoverable"
-                        style={{ gap: "10px", padding: "8px 10px", borderRadius: "8px", background: i === selectedUni ? "var(--c-nav-active-bg)" : "transparent" }}
-                      >
-                        <div
-                          className="flex items-center justify-center"
-                          style={{ width: "26px", height: "26px", borderRadius: "7px", background: u.color + "18", color: u.color, fontSize: "9.5px", fontWeight: 700, flexShrink: 0 }}
-                        >
-                          {u.init}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div style={{ fontSize: "12.5px", fontWeight: 550, color: "var(--c-text-1)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.name}</div>
-                          <div style={{ fontSize: "11px", color: "var(--c-text-4)" }}>{u.city}, {u.country}</div>
-                        </div>
-                        {i === selectedUni && <Check width={15} height={15} stroke="#2563eb" strokeWidth={2.4} />}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-
-            <span className="hidden sm:inline" style={{ color: "var(--c-text-slash)", fontSize: "14px" }}>/</span>
-
-            {/* Field of study selector */}
-            <div className="relative">
-              <button
-                onClick={() => setFieldMenuOpen(!fieldMenuOpen)}
-                className="flex items-center cursor-pointer hoverable"
-                style={{ gap: "8px", height: "36px", padding: "0 12px", border: "1px solid var(--c-border-input)", borderRadius: "10px", background: "var(--c-bg-elevated)" }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                </svg>
-                <span style={{ fontSize: "13px", fontWeight: 550, color: "var(--c-text-1)" }}>{selectedField}</span>
-                <ChevronDown width={14} height={14} stroke="var(--c-text-4)" strokeWidth={2} />
-              </button>
-              {fieldMenuOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setFieldMenuOpen(false)} />
-                  <div className="absolute z-41" style={{ top: "42px", left: 0, width: "236px", background: "var(--c-dropdown-bg)", border: "1px solid var(--c-border)", borderRadius: "12px", boxShadow: "var(--c-shadow-heavy)", padding: "6px", zIndex: 41 }}>
-                    <div style={{ fontSize: "10.5px", fontWeight: 600, color: "var(--c-text-5)", letterSpacing: "0.04em", textTransform: "uppercase", padding: "8px 10px 6px" }}>
-                      Field of study
-                    </div>
-                    {fieldOptions.map((f) => (
-                      <div
-                        key={f}
-                        onClick={() => { setSelectedField(f); setFieldMenuOpen(false); }}
-                        className="flex items-center justify-between cursor-pointer hoverable"
-                        style={{ padding: "8px 10px", borderRadius: "8px", background: f === selectedField ? "var(--c-nav-active-bg)" : "transparent" }}
-                      >
-                        <span style={{ fontSize: "12.5px", fontWeight: 500, color: "var(--c-text-1)" }}>{f}</span>
-                        {f === selectedField && <Check width={15} height={15} stroke="#2563eb" strokeWidth={2.4} />}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap" style={{ gap: "8px" }}>
-            <button style={filterBtnStyle}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 21h16" /></svg>
-              Import CSV / Excel
-            </button>
-            <button
-              onClick={() => setDrawerOpen(true)}
-              className="flex items-center cursor-pointer"
-              style={{ height: "34px", gap: "6px", padding: "0 13px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "9px", fontSize: "12.5px", fontWeight: 550, boxShadow: "0 1px 2px rgba(37,99,235,0.25)" }}
-            >
-              <Plus width={15} height={15} stroke="#fff" strokeWidth={2.4} />
-              Add course
-            </button>
-          </div>
+    <div className="px-4 sm:px-8 pt-6 pb-[60px]" style={{ animation: "fadeUp 0.28s ease" }}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" style={{ marginBottom: "20px" }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: "20px", fontWeight: 600, letterSpacing: "-0.025em", color: "var(--c-text-1)" }}>Courses</h1>
+          <p style={{ margin: "5px 0 0", fontSize: "13px", color: "var(--c-text-3)" }}>Course catalog — faculty + degree level</p>
         </div>
-
-        {/* Grid toolbar */}
-        <div className="flex flex-wrap items-center" style={{ gap: "7px" }}>
-          <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--c-chip-info-text)", background: "var(--c-chip-info-bg)", padding: "4px 10px", borderRadius: "7px" }}>
-            {filtered.length} rows
-          </span>
-          <div style={{ width: "1px", height: "18px", background: "var(--c-border-divider)" }} />
-          {["Bulk edit", "Copy", "Paste", "Duplicate"].map((tool) => (
-            <button key={tool} style={gridToolStyle}>{tool}</button>
-          ))}
-          <div className="flex-1" />
-          <span style={{ fontSize: "11.5px", color: "var(--c-text-4)" }}>Autosaved &middot; just now</span>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <button onClick={() => setFilterOpen(!filterOpen)} className="flex items-center cursor-pointer hoverable"
+              style={{ height: "34px", gap: "7px", padding: "0 12px", border: "1px solid var(--c-border-input)", borderRadius: "9px", background: "var(--c-bg-elevated)", fontSize: "12.5px", fontWeight: 550, color: "var(--c-text-1)" }}>
+              <span style={{ maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {selectedFilterFaculty ? selectedFilterFaculty.name : "All faculties"}
+              </span>
+              <ChevronDown width={13} height={13} stroke="var(--c-text-4)" strokeWidth={2} />
+            </button>
+            {filterOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setFilterOpen(false)} />
+                <div className="absolute z-50" style={{ top: "40px", right: 0, width: "280px", maxHeight: "300px", overflowY: "auto", background: "var(--c-dropdown-bg)", border: "1px solid var(--c-border)", borderRadius: "12px", boxShadow: "var(--c-shadow-heavy)", padding: "6px" }}>
+                  <div onClick={() => { setFilterFaculty(""); setFilterOpen(false); }} className="flex items-center justify-between cursor-pointer hoverable"
+                    style={{ padding: "8px 10px", borderRadius: "8px", background: !filterFaculty ? "var(--c-nav-active-bg)" : "transparent" }}>
+                    <span style={{ fontSize: "12.5px", fontWeight: 500, color: "var(--c-text-1)" }}>All faculties</span>
+                    {!filterFaculty && <Check width={15} height={15} stroke="#2563eb" strokeWidth={2.4} />}
+                  </div>
+                  {faculties.map((f) => (
+                    <div key={f.id} onClick={() => { setFilterFaculty(f.id); setFilterOpen(false); }} className="flex items-center justify-between cursor-pointer hoverable"
+                      style={{ padding: "8px 10px", borderRadius: "8px", background: filterFaculty === f.id ? "var(--c-nav-active-bg)" : "transparent" }}>
+                      <div>
+                        <div style={{ fontSize: "12.5px", fontWeight: 500, color: "var(--c-text-1)" }}>{f.name}</div>
+                        {f.university && <div style={{ fontSize: "11px", color: "var(--c-text-4)" }}>{f.university.name}</div>}
+                      </div>
+                      {filterFaculty === f.id && <Check width={15} height={15} stroke="#2563eb" strokeWidth={2.4} />}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+          <button onClick={openCreate} className="flex items-center cursor-pointer"
+            style={{ height: "34px", gap: "6px", padding: "0 13px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "9px", fontSize: "12.5px", fontWeight: 550, boxShadow: "0 1px 2px rgba(37,99,235,0.25)" }}>
+            <Plus width={15} height={15} stroke="#fff" strokeWidth={2.4} />Add course
+          </button>
         </div>
       </div>
 
-      {/* Grid */}
-      <div className="flex-1 overflow-auto px-4 pb-6 sm:px-6 md:px-8 md:pb-10">
-        <div style={{ border: "1px solid var(--c-border)", borderRadius: "12px", overflow: "hidden", minWidth: "min-content" }}>
-          {/* Header */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "44px minmax(80px,1fr) minmax(180px,2.5fr) minmax(120px,1.5fr) minmax(70px,0.8fr) minmax(90px,1fr) minmax(70px,0.8fr) minmax(55px,0.6fr) minmax(50px,0.5fr) minmax(50px,0.5fr) minmax(90px,1fr) minmax(90px,1fr) minmax(80px,0.8fr)",
-              background: "var(--c-bg-panel)",
-              borderBottom: "1px solid var(--c-border)",
-              position: "sticky",
-              top: 0,
-              zIndex: 3,
-            }}
-          >
-            <div className="flex items-center justify-center" style={{ height: "38px", borderRight: "1px solid var(--c-border-grid)" }}>
-              <div style={{ width: "14px", height: "14px", border: "1.6px solid var(--c-border-check)", borderRadius: "4px" }} />
-            </div>
-            {columns.map((col) => (
-              <div
-                key={col}
-                className="flex items-center"
-                style={{
-                  padding: "0 10px",
-                  height: "38px",
-                  borderRight: "1px solid var(--c-border-grid)",
-                  fontSize: "10.5px",
-                  fontWeight: 600,
-                  color: "var(--c-text-label)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.03em",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {col}
-              </div>
-            ))}
-          </div>
+      {error && (
+        <div className="flex items-center justify-between" style={{ padding: "10px 14px", marginBottom: "16px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "10px", fontSize: "13px", color: "#dc2626" }}>
+          <span>{error}</span>
+          <button onClick={() => setError(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#dc2626" }}><X width={14} height={14} /></button>
+        </div>
+      )}
 
-          {/* Rows */}
-          {filtered.map((row, ri) => (
-            <div
-              key={ri}
-              className="hoverable"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "44px minmax(80px,1fr) minmax(180px,2.5fr) minmax(120px,1.5fr) minmax(70px,0.8fr) minmax(90px,1fr) minmax(70px,0.8fr) minmax(55px,0.6fr) minmax(50px,0.5fr) minmax(50px,0.5fr) minmax(90px,1fr) minmax(90px,1fr) minmax(80px,0.8fr)",
-              }}
-            >
-              <div
-                className="flex items-center justify-center"
-                style={{
-                  height: "40px",
-                  borderRight: "1px solid var(--c-border-grid)",
-                  borderBottom: "1px solid var(--c-border-grid)",
-                  background: "var(--c-bg-panel)",
-                  fontSize: "11px",
-                  color: "var(--c-text-row-num)",
-                  fontVariantNumeric: "tabular-nums",
-                }}
-              >
-                {ri + 1}
-              </div>
-              {row.map((val, ci) => (
-                <div
-                  key={ci}
-                  className="flex items-center"
-                  style={{
-                    padding: "0 10px",
-                    height: "40px",
-                    fontSize: "12.5px",
-                    color: ci === 1 ? "var(--c-text-1)" : "var(--c-text-2)",
-                    fontWeight: ci === 1 ? 500 : 400,
-                    borderRight: "1px solid var(--c-border-grid)",
-                    borderBottom: "1px solid var(--c-border-grid)",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    background: "var(--c-bg-elevated)",
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  {ci === 11 ? <StatusChip status={val} /> : val}
-                </div>
-              ))}
-            </div>
-          ))}
-
-          {/* Add row */}
-          <div
-            onClick={() => setDrawerOpen(true)}
-            className="flex items-center cursor-pointer hoverable"
-            style={{ gap: "8px", height: "38px", padding: "0 14px", background: "var(--c-bg-elevated)", color: "var(--c-text-4)", fontSize: "12.5px" }}
-          >
-            <Plus width={14} height={14} strokeWidth={2} />
-            Add row
+      {loading ? (
+        <div className="flex items-center justify-center" style={{ padding: "60px 0", color: "var(--c-text-4)" }}><Loader2 width={24} height={24} className="animate-spin" /></div>
+      ) : courses.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "60px 0", color: "var(--c-text-4)", fontSize: "14px" }}>No courses found. Add your first course to get started.</div>
+      ) : (
+        <div style={{ border: "1px solid var(--c-border)", borderRadius: "12px", overflow: "hidden", background: "var(--c-bg-elevated)" }}>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "800px" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--c-border)" }}>
+                  {["Course", "Code", "Faculty", "Degree", "Fee", "Duration", ""].map((h) => (
+                    <th key={h} style={{ padding: "10px 16px", fontSize: "11px", fontWeight: 600, color: "var(--c-text-4)", textAlign: "left", textTransform: "uppercase", letterSpacing: "0.04em" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {courses.map((c) => (
+                  <tr key={c.id} className="group hoverable" style={{ borderBottom: "1px solid var(--c-border)" }}>
+                    <td style={{ padding: "12px 16px" }}>
+                      <div style={{ fontSize: "13.5px", fontWeight: 550, color: "var(--c-text-1)" }}>{c.name}</div>
+                      {c.scholarship_available && (
+                        <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--c-chip-success-text)", marginTop: "2px" }}>Scholarship available</div>
+                      )}
+                    </td>
+                    <td style={{ padding: "12px 16px" }}>
+                      <span style={{ fontSize: "12px", fontFamily: "monospace", color: "var(--c-text-3)", background: "var(--c-bg-surface)", padding: "2px 8px", borderRadius: "6px" }}>{c.course_code}</span>
+                    </td>
+                    <td style={{ padding: "12px 16px" }}>
+                      <span style={{ fontSize: "11.5px", fontWeight: 600, color: "var(--c-chip-info-text)", background: "var(--c-chip-info-bg)", padding: "3px 10px", borderRadius: "20px" }}>
+                        {c.faculty?.name || getFacultyName(c.faculty_id)}
+                      </span>
+                    </td>
+                    <td style={{ padding: "12px 16px" }}>
+                      <span style={{ fontSize: "11.5px", fontWeight: 600, color: "var(--c-chip-ai-text)", background: "var(--c-chip-ai-bg)", padding: "3px 10px", borderRadius: "20px" }}>
+                        {c.degree?.name || getDegreeName(c.degree_id)}
+                      </span>
+                    </td>
+                    <td style={{ padding: "12px 16px" }}>
+                      <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--c-text-1)" }}>{c.currency} {Number(c.tuition_fee).toLocaleString()}</span>
+                    </td>
+                    <td style={{ padding: "12px 16px" }}>
+                      <span style={{ fontSize: "13px", color: "var(--c-text-2)" }}>{c.duration_months}mo</span>
+                    </td>
+                    <td style={{ padding: "12px 16px", textAlign: "right" }}>
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100" style={{ transition: "opacity 0.15s" }}>
+                        <button onClick={() => openEdit(c)} className="cursor-pointer" style={{ width: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "1px solid var(--c-border)", borderRadius: "7px" }}>
+                          <Pencil width={13} height={13} stroke="var(--c-text-3)" strokeWidth={2} />
+                        </button>
+                        <button onClick={() => handleDelete(c.id)} className="cursor-pointer" style={{ width: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "1px solid #fecaca", borderRadius: "7px" }}>
+                          <Trash2 width={13} height={13} stroke="#dc2626" strokeWidth={2} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Add Course Drawer */}
-      <AddCourseDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        onAdd={handleAddCourse}
-      />
+      {drawerOpen && (
+        <>
+          <div className="fixed inset-0 z-40" style={{ background: "var(--c-overlay)" }} onClick={() => setDrawerOpen(false)} />
+          <div className="fixed top-0 right-0 bottom-0 z-50 flex flex-col"
+            style={{ width: "460px", maxWidth: "100vw", background: "var(--c-bg-elevated)", borderLeft: "1px solid var(--c-border)", animation: "slideInRight 0.2s ease" }}>
+            <div className="flex items-center justify-between" style={{ padding: "16px 20px", borderBottom: "1px solid var(--c-border)" }}>
+              <h2 style={{ margin: 0, fontSize: "16px", fontWeight: 600, color: "var(--c-text-1)" }}>{editingId ? "Edit Course" : "Add Course"}</h2>
+              <button onClick={() => setDrawerOpen(false)} className="cursor-pointer" style={{ width: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", borderRadius: "7px", color: "var(--c-text-4)" }}>
+                <X width={18} height={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto" style={{ padding: "20px" }}>
+              <div style={{ marginBottom: "16px" }}>
+                <label style={labelStyle}>Course Name *</label>
+                <input style={inputStyle} placeholder="e.g. Software Engineering" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div style={{ marginBottom: "16px" }}>
+                  <label style={labelStyle}>Course Code *</label>
+                  <input style={inputStyle} placeholder="e.g. CS101" value={form.course_code} onChange={(e) => setForm({ ...form, course_code: e.target.value })} />
+                </div>
+                <div style={{ marginBottom: "16px" }}>
+                  <label style={labelStyle}>Duration (months) *</label>
+                  <input style={inputStyle} type="number" placeholder="e.g. 24" value={form.duration_months} onChange={(e) => setForm({ ...form, duration_months: e.target.value })} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div style={{ marginBottom: "16px" }}>
+                  <label style={labelStyle}>Tuition Fee *</label>
+                  <input style={inputStyle} type="number" placeholder="e.g. 35000" value={form.tuition_fee} onChange={(e) => setForm({ ...form, tuition_fee: e.target.value })} />
+                </div>
+                <div style={{ marginBottom: "16px" }}>
+                  <label style={labelStyle}>Currency</label>
+                  <input style={inputStyle} placeholder="AUD" value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} />
+                </div>
+              </div>
+
+              <Picker label="Faculty *" value={form.faculty_id} options={facultyOptions} onSelect={(id) => setForm({ ...form, faculty_id: id })} placeholder="Select faculty" />
+              <Picker label="Degree *" value={form.degree_id} options={degreeOptions} onSelect={(id) => setForm({ ...form, degree_id: id })} placeholder="Select degree" />
+
+              <div style={{ marginBottom: "16px" }}>
+                <label style={labelStyle}>Intake</label>
+                <input style={inputStyle} placeholder="e.g. February, July" value={form.intake} onChange={(e) => setForm({ ...form, intake: e.target.value })} />
+              </div>
+
+              <div style={{ marginBottom: "8px" }}>
+                <label style={labelStyle}>English Requirements</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["ielts_requirement", "pte_requirement", "toefl_requirement"] as const).map((field, i) => (
+                    <div key={field}>
+                      <div style={{ fontSize: "11px", color: "var(--c-text-4)", marginBottom: "4px" }}>{["IELTS", "PTE", "TOEFL"][i]}</div>
+                      <input style={inputStyle} type="number" step="0.5" placeholder={["6.5", "58", "79"][i]}
+                        value={form[field]} onChange={(e) => setForm({ ...form, [field]: e.target.value })} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: "16px", marginTop: "16px" }}>
+                <label style={labelStyle}>Overview</label>
+                <textarea style={textareaStyle} placeholder="Brief course description..." value={form.overview} onChange={(e) => setForm({ ...form, overview: e.target.value })} />
+              </div>
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={form.scholarship_available} onChange={(e) => setForm({ ...form, scholarship_available: e.target.checked })} />
+                <span style={{ fontSize: "13px", fontWeight: 550, color: "var(--c-text-2)" }}>Scholarship available</span>
+              </label>
+            </div>
+
+            <div className="flex gap-2" style={{ padding: "16px 20px", borderTop: "1px solid var(--c-border)" }}>
+              <button onClick={() => setDrawerOpen(false)} className="flex-1 cursor-pointer"
+                style={{ height: "38px", border: "1px solid var(--c-border-input)", borderRadius: "9px", background: "var(--c-bg-elevated)", fontSize: "13px", fontWeight: 550, color: "var(--c-text-2)" }}>Cancel</button>
+              <button onClick={handleSave} disabled={saving || !canSave} className="flex-1 flex items-center justify-center cursor-pointer"
+                style={{ height: "38px", border: "none", borderRadius: "9px", background: saving || !canSave ? "#93c5fd" : "#2563eb", fontSize: "13px", fontWeight: 550, color: "#fff", gap: "6px" }}>
+                {saving && <Loader2 width={14} height={14} className="animate-spin" />}
+                {editingId ? "Update" : "Create"}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      <style jsx>{`
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+      `}</style>
     </div>
   );
 }
