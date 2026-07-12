@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   JOURNEY_STEPS,
@@ -282,6 +282,14 @@ function CheckIcon() {
 /* ────────────────────────── Main page ────────────────────────────── */
 
 export default function ApplyPage() {
+  return (
+    <Suspense>
+      <ApplyPageInner />
+    </Suspense>
+  );
+}
+
+function ApplyPageInner() {
   const searchParams = useSearchParams();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>({ ...INITIAL_FORM });
