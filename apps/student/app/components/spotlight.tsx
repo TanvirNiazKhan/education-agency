@@ -26,7 +26,7 @@ export default function Spotlight({ open, onClose }: SpotlightProps) {
   const [results, setResults] = useState<ResultItem[]>([]);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleClose = useCallback(() => {
     setQuery("");
