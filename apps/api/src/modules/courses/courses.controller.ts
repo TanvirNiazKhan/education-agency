@@ -24,14 +24,17 @@ export class CoursesController {
   async findAll(
     @Query('faculty_id') facultyId?: string,
     @Query('scholarship') scholarship?: string,
+    @Query('q') search?: string,
+    @Query('include_inactive') includeInactive?: string,
   ): Promise<Course[]> {
+    const inclInactive = includeInactive === 'true';
     if (scholarship === 'true') {
       return this.coursesService.findWithScholarship();
     }
     if (facultyId) {
-      return this.coursesService.findByFacultyId(facultyId);
+      return this.coursesService.findByFacultyId(facultyId, search, inclInactive);
     }
-    return this.coursesService.findAll();
+    return this.coursesService.findAll(search, inclInactive);
   }
 
   @Get(':id')

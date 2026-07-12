@@ -3,13 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
-import {
-  FIELDS_FILTER,
-  UNIS,
-  COURSES,
-  SCHOLARSHIPS,
-  DESTINATIONS,
-} from "../lib/data";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 interface SpotlightProps {
   open: boolean;
@@ -20,112 +15,101 @@ interface ResultItem {
   category: string;
   icon: string;
   tint: string;
-  iconColor: string;
   title: string;
   subtitle: string;
   kind: string;
   href: string;
 }
 
-function buildResults(query: string): ResultItem[] {
-  const q = query.toLowerCase().trim();
-  const results: ResultItem[] = [];
-
-  // Fields of study
-  for (const field of FIELDS_FILTER) {
-    if (q && !field.toLowerCase().includes(q)) continue;
-    results.push({
-      category: "Fields of study",
-      icon: "🎓",
-      tint: "#eff4ff",
-      iconColor: "#2563eb",
-      title: field,
-      subtitle: "Field of study",
-      kind: "Field",
-      href: `/search?field=${encodeURIComponent(field)}`,
-    });
-  }
-
-  // Universities
-  for (const uni of UNIS) {
-    if (q && !uni.name.toLowerCase().includes(q) && !uni.country.toLowerCase().includes(q)) continue;
-    results.push({
-      category: "Universities",
-      icon: "🏛",
-      tint: "#f4efff",
-      iconColor: "#7c3aed",
-      title: uni.name,
-      subtitle: `${uni.city}, ${uni.country} · #${uni.rank}`,
-      kind: "University",
-      href: `/university/${uni.id}`,
-    });
-  }
-
-  // Courses
-  for (const course of COURSES) {
-    if (q && !course.title.toLowerCase().includes(q) && !course.uni.toLowerCase().includes(q)) continue;
-    results.push({
-      category: "Courses",
-      icon: "📘",
-      tint: course.tint,
-      iconColor: course.icColor,
-      title: course.title,
-      subtitle: `${course.uni} · ${course.level}`,
-      kind: "Course",
-      href: `/course/${course.id}`,
-    });
-  }
-
-  // Scholarships
-  for (const sch of SCHOLARSHIPS) {
-    if (q && !sch.name.toLowerCase().includes(q) && !sch.uni.toLowerCase().includes(q)) continue;
-    results.push({
-      category: "Scholarships",
-      icon: "💰",
-      tint: "#e9f9ef",
-      iconColor: "#0f9d58",
-      title: sch.name,
-      subtitle: `${sch.uni} · ${sch.amount}`,
-      kind: "Scholarship",
-      href: `/search?scholarship=${encodeURIComponent(sch.name)}`,
-    });
-  }
-
-  // Countries
-  for (const dest of DESTINATIONS) {
-    if (q && !dest.name.toLowerCase().includes(q)) continue;
-    results.push({
-      category: "Countries",
-      icon: "🌍",
-      tint: "#fff1e9",
-      iconColor: "#ea580c",
-      title: dest.name,
-      subtitle: `${dest.unis} universities · ${dest.courses} courses`,
-      kind: "Country",
-      href: `/search?country=${encodeURIComponent(dest.name)}`,
-    });
-  }
-
-  return results;
-}
-
 export default function Spotlight({ open, onClose }: SpotlightProps) {
   const [query, setQuery] = useState("");
+  const [results, setResults] = useState<ResultItem[]>([]);
+  const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const results = buildResults(query);
-
-  // Group by category
-  const grouped = results.reduce<Record<string, ResultItem[]>>((acc, item) => {
-    if (!acc[item.category]) acc[item.category] = [];
-    acc[item.category].push(item);
-    return acc;
-  }, {});
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   const handleClose = useCallback(() => {
     setQuery("");
+    setResults([]);
     onClose();
   }, [onClose]);
+
+  // Debounced search
+  useEffect(() => {
+    if (!open) return;
+    const q = query.trim();
+    if (!q) {
+      setResults([]);
+      return;
+    }
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      const encoded = encodeURIComponent(q);
+      try {
+        const [unis, courses, countries] = await Promise.all([
+          fetch(`${API_BASE}/universities?q=${encoded}`).then((r) => r.json()).catch(() => []),
+          fetch(`${API_BASE}/courses?q=${encoded}`).then((r) => r.json()).catch(() => []),
+          fetch(`${API_BASE}/countries`).then((r) => r.json()).catch(() => []),
+        ]);
+
+        const items: ResultItem[] = [];
+
+        // Universities
+        for (const u of unis.slice(0, 5)) {
+          items.push({
+            category: "Universities",
+            icon: "🏛",
+            tint: "#f4efff",
+            title: u.name,
+            subtitle: `${u.city?.name || ""}${u.city?.name && u.country?.name ? ", " : ""}${u.country?.name || ""}`,
+            kind: "University",
+            href: `/university/${u.slug}`,
+          });
+        }
+
+        // Courses
+        for (const c of courses.slice(0, 5)) {
+          items.push({
+            category: "Courses",
+            icon: "📘",
+            tint: "#eff4ff",
+            title: c.name,
+            subtitle: `${c.faculty?.name || ""} · ${c.degree?.name || ""}`,
+            kind: "Course",
+            href: `/course/${c.id}`,
+          });
+        }
+
+        // Countries (filter locally)
+        const filteredCountries = countries
+          .filter((c: { name: string; is_active: boolean }) => c.is_active && c.name.toLowerCase().includes(q.toLowerCase()))
+          .slice(0, 3);
+        for (const c of filteredCountries) {
+          items.push({
+            category: "Countries",
+            icon: "🌍",
+            tint: "#fff1e9",
+            title: c.name,
+            subtitle: "Explore universities",
+            kind: "Country",
+            href: `/search`,
+          });
+        }
+
+        setResults(items);
+      } catch {
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 250);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [query, open]);
 
   useEffect(() => {
     if (open) {
@@ -150,6 +134,13 @@ export default function Spotlight({ open, onClose }: SpotlightProps) {
   }, [open, handleClose]);
 
   if (!open) return null;
+
+  // Group by category
+  const grouped = results.reduce<Record<string, ResultItem[]>>((acc, item) => {
+    if (!acc[item.category]) acc[item.category] = [];
+    acc[item.category].push(item);
+    return acc;
+  }, {});
 
   return (
     <div
@@ -196,7 +187,7 @@ export default function Spotlight({ open, onClose }: SpotlightProps) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search universities, courses, scholarships, countries\u2026"
+            placeholder="Search universities, courses, countries…"
             style={{
               flex: 1,
               border: "none",
@@ -230,16 +221,21 @@ export default function Spotlight({ open, onClose }: SpotlightProps) {
 
         {/* Results */}
         <div style={{ maxHeight: 420, overflowY: "auto", padding: "8px 0" }}>
-          {Object.keys(grouped).length === 0 && (
-            <div
-              style={{
-                padding: "32px 20px",
-                textAlign: "center",
-                color: "var(--color-muted)",
-                fontSize: 14,
-              }}
-            >
+          {query.trim() && !loading && Object.keys(grouped).length === 0 && (
+            <div style={{ padding: "32px 20px", textAlign: "center", color: "var(--color-muted)", fontSize: 14 }}>
               No results found for &ldquo;{query}&rdquo;
+            </div>
+          )}
+
+          {loading && (
+            <div style={{ padding: "32px 20px", textAlign: "center", color: "var(--color-muted)", fontSize: 14 }}>
+              Searching...
+            </div>
+          )}
+
+          {!query.trim() && !loading && (
+            <div style={{ padding: "32px 20px", textAlign: "center", color: "var(--color-muted)", fontSize: 14 }}>
+              Start typing to search universities, courses, and countries
             </div>
           )}
 
@@ -274,7 +270,6 @@ export default function Spotlight({ open, onClose }: SpotlightProps) {
                     transition: "background .1s",
                   }}
                 >
-                  {/* Icon */}
                   <div
                     style={{
                       width: 38,
@@ -290,47 +285,15 @@ export default function Spotlight({ open, onClose }: SpotlightProps) {
                   >
                     {item.icon}
                   </div>
-
-                  {/* Text */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 600,
-                        color: "var(--color-ink)",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "var(--color-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {item.title}
                     </div>
-                    <div
-                      style={{
-                        fontSize: 12.5,
-                        color: "var(--color-muted)",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                    <div style={{ fontSize: 12.5, color: "var(--color-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {item.subtitle}
                     </div>
                   </div>
-
-                  {/* Kind badge */}
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      padding: "3px 9px",
-                      borderRadius: 7,
-                      background: "var(--color-line-2)",
-                      color: "var(--color-sub)",
-                      flexShrink: 0,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 7, background: "var(--color-line-2)", color: "var(--color-sub)", flexShrink: 0, whiteSpace: "nowrap" }}>
                     {item.kind}
                   </span>
                 </Link>
@@ -353,33 +316,13 @@ export default function Spotlight({ open, onClose }: SpotlightProps) {
         >
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
-              <kbd
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  fontFamily: "inherit",
-                  padding: "2px 6px",
-                  borderRadius: 5,
-                  background: "var(--color-line-2)",
-                  border: "1px solid var(--color-line)",
-                }}
-              >
+              <kbd style={{ fontSize: 10, fontWeight: 700, fontFamily: "inherit", padding: "2px 6px", borderRadius: 5, background: "var(--color-line-2)", border: "1px solid var(--color-line)" }}>
                 ↵
               </kbd>
               open
             </span>
             <span className="flex items-center gap-1.5">
-              <kbd
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  fontFamily: "inherit",
-                  padding: "2px 6px",
-                  borderRadius: 5,
-                  background: "var(--color-line-2)",
-                  border: "1px solid var(--color-line)",
-                }}
-              >
+              <kbd style={{ fontSize: 10, fontWeight: 700, fontFamily: "inherit", padding: "2px 6px", borderRadius: 5, background: "var(--color-line-2)", border: "1px solid var(--color-line)" }}>
                 ↑↓
               </kbd>
               navigate

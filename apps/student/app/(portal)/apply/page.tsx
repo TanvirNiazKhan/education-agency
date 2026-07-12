@@ -1,26 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   JOURNEY_STEPS,
   DOCS_REQUIRED,
   DOCS_OPTIONAL,
-  INSTITUTIONS,
-  CAMPUSES,
-  COURSE_LIST,
   ALL_COUNTRIES,
   MONTHS,
   YEARS_LIST,
 } from "../../lib/data";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+
 /* ────────────────────────── Form state shape ────────────────────────── */
 
 const INITIAL_FORM = {
-  institution: "CQUniversity Australia",
-  course: "Bachelor of Information Technology",
-  campus: "Sydney",
+  institution: "",
+  course: "",
+  campus: "",
   appType: "New application",
-  commenceMonth: "February",
+  commenceMonth: "",
   commenceYear: "2026",
   studyLocation: "Offshore (still in my home country)",
   studentType: "International",
@@ -282,9 +282,52 @@ function CheckIcon() {
 /* ────────────────────────── Main page ────────────────────────────── */
 
 export default function ApplyPage() {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>({ ...INITIAL_FORM });
   const [uploadedDocs, setUploadedDocs] = useState<Set<string>>(new Set());
+  const [universities, setUniversities] = useState<{ id: string; name: string }[]>([]);
+  const [courses, setCourses] = useState<{ id: string; name: string; faculty?: { name: string } }[]>([]);
+  const [presetUniversity, setPresetUniversity] = useState(false);
+
+  // Fetch universities list + pre-fill from query params
+  useEffect(() => {
+    fetch(`${API_BASE}/universities`).then((r) => r.json()).then((unis: { id: string; name: string; slug: string }[]) => {
+      setUniversities(unis);
+
+      const uniId = searchParams.get("university_id");
+      const courseId = searchParams.get("course_id");
+
+      if (uniId || courseId) setPresetUniversity(true);
+
+      if (courseId) {
+        fetch(`${API_BASE}/courses/${courseId}`).then((r) => r.json()).then((c: { name: string; faculty?: { name: string; university_id: string; university?: { name: string } } }) => {
+          const uniName = c.faculty?.university?.name || unis.find((u) => u.id === c.faculty?.university_id)?.name || "";
+          setForm((f) => ({ ...f, institution: uniName, course: c.name, campus: c.faculty?.name || "" }));
+          // Load courses for that university
+          if (c.faculty?.university_id) {
+            loadCoursesForUni(c.faculty.university_id);
+          }
+        }).catch(() => {});
+      } else if (uniId) {
+        const uni = unis.find((u) => u.id === uniId);
+        if (uni) setForm((f) => ({ ...f, institution: uni.name }));
+        loadCoursesForUni(uniId);
+      }
+    }).catch(() => {});
+  }, []);
+
+  function loadCoursesForUni(uniId: string) {
+    // Fetch faculties then courses for each
+    fetch(`${API_BASE}/faculties?university_id=${uniId}`).then((r) => r.json()).then((faculties: { id: string; name: string }[]) => {
+      const fetches = faculties.map((f) =>
+        fetch(`${API_BASE}/courses?faculty_id=${f.id}`).then((r) => r.json()).then((cs: { id: string; name: string }[]) =>
+          cs.map((c) => ({ ...c, faculty: f }))
+        )
+      );
+      Promise.all(fetches).then((results) => setCourses(results.flat()));
+    }).catch(() => {});
+  }
 
   const totalSteps = JOURNEY_STEPS.length; // 9
   const progress = ((step + 1) / totalSteps) * 100;
@@ -314,8 +357,6 @@ export default function ApplyPage() {
         { label: "Campus", value: form.campus },
         { label: "Application type", value: form.appType },
         { label: "Start", value: `${form.commenceMonth} ${form.commenceYear}` },
-        { label: "Study location", value: form.studyLocation },
-        { label: "Student type", value: form.studentType },
         { label: "Study load", value: form.enrolType },
       ],
     },
@@ -618,26 +659,44 @@ export default function ApplyPage() {
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 20 }}>
                   <div className="sm:col-span-2">
-                    <FieldSelect
-                      label="Institution"
-                      value={form.institution}
-                      onChange={set("institution")}
-                      options={INSTITUTIONS}
-                    />
+                    {presetUniversity ? (
+                      <div>
+                        <label style={LABEL_STYLE}>Institution</label>
+                        <div style={{ ...INPUT_STYLE, display: "flex", alignItems: "center", background: "var(--color-line-2)", color: "var(--color-ink)" }}>
+                          {form.institution}
+                        </div>
+                      </div>
+                    ) : (
+                      <FieldSelect
+                        label="Institution"
+                        value={form.institution}
+                        onChange={(v) => {
+                          set("institution")(v);
+                          set("course")("");
+                          set("campus")("");
+                          const uni = universities.find((u) => u.name === v);
+                          if (uni) loadCoursesForUni(uni.id);
+                        }}
+                        options={universities.map((u) => u.name)}
+                      />
+                    )}
                   </div>
                   <div className="sm:col-span-2">
                     <FieldSelect
                       label="Course"
                       value={form.course}
-                      onChange={set("course")}
-                      options={COURSE_LIST}
+                      onChange={(v) => {
+                        set("course")(v);
+                        const c = courses.find((c) => c.name === v);
+                        if (c?.faculty) set("campus")(c.faculty.name);
+                      }}
+                      options={courses.map((c) => c.name)}
                     />
                   </div>
-                  <FieldSelect
-                    label="Campus"
+                  <FieldInput
+                    label="Campus / Faculty"
                     value={form.campus}
                     onChange={set("campus")}
-                    options={CAMPUSES}
                   />
                   <FieldSelect
                     label="Application type"
@@ -657,22 +716,6 @@ export default function ApplyPage() {
                     onChange={set("commenceYear")}
                     options={["2026", "2027", "2028"]}
                   />
-                  <div className="sm:col-span-2">
-                    <RadioPills
-                      label="Study location"
-                      value={form.studyLocation}
-                      onChange={set("studyLocation")}
-                      options={["Onshore", "Offshore (still in my home country)"]}
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <RadioPills
-                      label="Student type"
-                      value={form.studentType}
-                      onChange={set("studentType")}
-                      options={["International", "Domestic"]}
-                    />
-                  </div>
                   <FieldSelect
                     label="Study load"
                     value={form.enrolType}

@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
-  uniById,
-  COURSES,
-  SCHOLARSHIPS,
   FAQS,
   REVIEWS,
 } from "../../../lib/data";
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const IMG_BASE =
+  process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
+  "http://localhost:3001";
 
 const TABS = [
   "Overview",
@@ -25,30 +28,346 @@ const TABS = [
 
 type Tab = (typeof TABS)[number];
 
+interface ApiUniversity {
+  id: number;
+  name: string;
+  short_name: string;
+  slug: string;
+  university_type: string;
+  website: string;
+  email: string;
+  phone: string;
+  address: string;
+  postal_code: string;
+  logo: string;
+  banner: string;
+  description: string;
+  featured: boolean;
+  country_id: number;
+  city_id: number;
+  country?: { name: string };
+  city?: { name: string };
+  faculties?: { id: number; name: string; description: string }[];
+}
+
+interface ApiImage {
+  id: number;
+  url: string;
+  alt_text: string;
+  type: "logo" | "banner" | "gallery";
+  sort_order: number;
+}
+
+interface ApiScholarship {
+  id: number;
+  name: string;
+  description: string;
+  percentage: number;
+  type: string;
+  deadline: string;
+  scopes?: { scope_type: string; scope_id: number }[];
+}
+
+interface ApiIntake {
+  id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+  deadline: string;
+  status: string;
+}
+
+interface ApiCourse {
+  id: number;
+  name: string;
+  course_code: string;
+  tuition_fee: number;
+  currency: string;
+  duration_months: number;
+  intake: string;
+  ielts_requirement: number;
+  ielts_speaking: number;
+  ielts_writing: number;
+  ielts_reading: number;
+  ielts_listening: number;
+  pte_requirement: number;
+  pte_speaking: number;
+  pte_writing: number;
+  pte_reading: number;
+  pte_listening: number;
+  toefl_requirement: number;
+  toefl_speaking: number;
+  toefl_writing: number;
+  toefl_reading: number;
+  toefl_listening: number;
+  overview: string;
+  scholarship_available: boolean;
+  faculty_id: number;
+  degree_id: number;
+}
+
+interface ApiDegree {
+  id: number;
+  name: string;
+}
+
+interface CourseWithFaculty extends ApiCourse {
+  facultyName: string;
+  degreeName: string;
+}
+
+const COURSE_TINTS = [
+  { tint: "rgba(37,99,235,.10)", color: "#2563eb" },
+  { tint: "rgba(15,157,88,.10)", color: "#0f9d58" },
+  { tint: "rgba(234,88,12,.10)", color: "#ea580c" },
+  { tint: "rgba(139,92,246,.10)", color: "#8b5cf6" },
+  { tint: "rgba(236,72,153,.10)", color: "#ec4899" },
+  { tint: "rgba(20,184,166,.10)", color: "#14b8a6" },
+];
+
 export default function UniversityDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const uni = uniById(id);
-  const [activeTab, setActiveTab] = useState<Tab>("Overview");
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get("tab") as Tab) || "Overview";
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
 
-  const initials = uni.name
+  const [university, setUniversity] = useState<ApiUniversity | null>(null);
+  const [images, setImages] = useState<ApiImage[]>([]);
+  const [scholarships, setScholarships] = useState<ApiScholarship[]>([]);
+  const [intakes, setIntakes] = useState<ApiIntake[]>([]);
+  const [courses, setCourses] = useState<CourseWithFaculty[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [bannerIdx, setBannerIdx] = useState(0);
+
+  useEffect(() => {
+    if (!id) return;
+
+    let cancelled = false;
+
+    async function fetchData() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        // 1. Fetch university by slug
+        const uniRes = await fetch(`${API_BASE}/universities/slug/${id}`);
+        if (!uniRes.ok) throw new Error("University not found");
+        const uni: ApiUniversity = await uniRes.json();
+        if (cancelled) return;
+        setUniversity(uni);
+
+        // 2. Parallel fetches for related data
+        const [imgRes, schRes, intakeRes, degreeRes] = await Promise.all([
+          fetch(`${API_BASE}/university-images?university_id=${uni.id}`),
+          fetch(`${API_BASE}/scholarships?university_id=${uni.id}`),
+          fetch(`${API_BASE}/intakes?university_id=${uni.id}`),
+          fetch(`${API_BASE}/degrees`),
+        ]);
+
+        const imgData: ApiImage[] = imgRes.ok ? await imgRes.json() : [];
+        const schData: ApiScholarship[] = schRes.ok ? await schRes.json() : [];
+        const intakeData: ApiIntake[] = intakeRes.ok
+          ? await intakeRes.json()
+          : [];
+        const degreeData: ApiDegree[] = degreeRes.ok
+          ? await degreeRes.json()
+          : [];
+
+        if (cancelled) return;
+        setImages(imgData);
+        setScholarships(schData);
+        setIntakes(intakeData);
+
+        // 3. Fetch courses from all faculties
+        const faculties = uni.faculties || [];
+        const coursePromises = faculties.map(async (f) => {
+          const res = await fetch(`${API_BASE}/courses?faculty_id=${f.id}`);
+          if (!res.ok) return [];
+          const data: ApiCourse[] = await res.json();
+          return data.map((c) => ({
+            ...c,
+            facultyName: f.name,
+            degreeName:
+              degreeData.find((d) => d.id === c.degree_id)?.name || "",
+          }));
+        });
+
+        const allCourses = (await Promise.all(coursePromises)).flat();
+        if (cancelled) return;
+        setCourses(allCourses);
+      } catch (err: unknown) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error ? err.message : "Failed to load university"
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    fetchData();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  /* ─── Banner auto-slide ─── */
+  const bannerCount = images.filter((i) => i.type === "banner").length;
+  const nextBanner = useCallback(() => {
+    setBannerIdx((prev) => (prev + 1) % (bannerCount || 1));
+  }, [bannerCount]);
+
+  useEffect(() => {
+    if (bannerCount <= 1) return;
+    const timer = setInterval(nextBanner, 5000);
+    return () => clearInterval(timer);
+  }, [bannerCount, nextBanner]);
+
+  /* ─── Loading / Error states ─── */
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "60vh",
+          gap: 16,
+        }}
+      >
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            border: "3.5px solid var(--color-line)",
+            borderTopColor: "var(--color-blue)",
+            borderRadius: "50%",
+            animation: "spin 0.8s linear infinite",
+          }}
+        />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <div style={{ fontSize: 14.5, color: "var(--color-muted)" }}>
+          Loading university...
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !university) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "60vh",
+          gap: 12,
+        }}
+      >
+        <div style={{ fontSize: 18, fontWeight: 700, color: "var(--color-navy)" }}>
+          University not found
+        </div>
+        <div style={{ fontSize: 14, color: "var(--color-sub)" }}>
+          {error || "The university you're looking for doesn't exist."}
+        </div>
+        <Link
+          href="/search"
+          style={{
+            marginTop: 8,
+            padding: "9px 20px",
+            borderRadius: 10,
+            background: "var(--color-blue)",
+            color: "#fff",
+            fontSize: 13.5,
+            fontWeight: 600,
+            textDecoration: "none",
+          }}
+        >
+          Back to search
+        </Link>
+      </div>
+    );
+  }
+
+  /* ─── Derived data ─── */
+  const accent = "#2563eb";
+  const bannerImages = images.filter((i) => i.type === "banner").sort((a, b) => a.sort_order - b.sort_order);
+  const logoImg = images.find((i) => i.type === "logo");
+  const galleryImages = images.filter((i) => i.type === "gallery");
+
+  const initials = university.name
     .split(" ")
     .filter((w) => w[0] === w[0].toUpperCase() && w.length > 2)
     .map((w) => w[0])
     .join("")
     .slice(0, 3);
 
-  const uniCourses = COURSES.filter((c) => c.uniId === uni.id);
+  // Derive tuition range from courses
+  const tuitionFees = courses
+    .map((c) => c.tuition_fee)
+    .filter((f) => f > 0);
+  const minTuition = tuitionFees.length > 0 ? Math.min(...tuitionFees) : null;
+  const tuitionCurrency = courses.find((c) => c.tuition_fee > 0)?.currency || "AUD";
+  const tuitionDisplay = minTuition
+    ? `${tuitionCurrency} ${minTuition.toLocaleString()}`
+    : "Contact university";
+
+  // Derive IELTS/PTE ranges from courses
+  const ieltsScores = courses
+    .map((c) => c.ielts_requirement)
+    .filter((s) => s > 0);
+  const pteScores = courses
+    .map((c) => c.pte_requirement)
+    .filter((s) => s > 0);
+  const minIelts = ieltsScores.length > 0 ? Math.min(...ieltsScores) : null;
+  const minPte = pteScores.length > 0 ? Math.min(...pteScores) : null;
+
+  // Scholarship summary
+  const schCount = scholarships.length;
+  const schSummary =
+    schCount > 0
+      ? `${schCount} scholarship${schCount > 1 ? "s" : ""}`
+      : "No scholarships";
 
   /* ─── Hero ─── */
   const hero = (
     <div
-      className="h-[200px] lg:h-[300px]"
+      className="h-[220px] lg:h-[280px]"
       style={{
-        background: uni.img,
         position: "relative",
         overflow: "hidden",
       }}
     >
+      {/* sliding banners */}
+      {bannerImages.length > 0 ? (
+        bannerImages.map((img, i) => (
+          <div
+            key={img.id}
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage: `url(${IMG_BASE}${img.url})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              opacity: i === bannerIdx ? 1 : 0,
+              transition: "opacity 0.8s ease-in-out",
+            }}
+          />
+        ))
+      ) : (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(135deg,#1e3a8a,#3b82f6)",
+          }}
+        />
+      )}
+
       {/* dark overlay */}
       <div
         style={{
@@ -58,6 +377,37 @@ export default function UniversityDetailPage() {
             "linear-gradient(to bottom, rgba(0,0,0,.18) 0%, rgba(0,0,0,.62) 100%)",
         }}
       />
+
+      {/* banner dots */}
+      {bannerImages.length > 1 && (
+        <div
+          style={{
+            position: "absolute",
+            top: 20,
+            right: 20,
+            display: "flex",
+            gap: 6,
+            zIndex: 10,
+          }}
+        >
+          {bannerImages.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setBannerIdx(i)}
+              style={{
+                width: i === bannerIdx ? 20 : 8,
+                height: 8,
+                borderRadius: 999,
+                background: i === bannerIdx ? "#fff" : "rgba(255,255,255,.45)",
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                padding: 0,
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* back button */}
       <Link
@@ -95,23 +445,38 @@ export default function UniversityDetailPage() {
           alignItems: "flex-end",
         }}
       >
-        {/* initials box */}
-        <div
-          className="w-[60px] h-[60px] lg:w-[84px] lg:h-[84px]"
-          style={{
-            borderRadius: 20,
-            background: "#fff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 28,
-            fontWeight: 800,
-            color: uni.accent,
-            flexShrink: 0,
-          }}
-        >
-          {initials}
-        </div>
+        {/* logo or initials box */}
+        {logoImg ? (
+          <img
+            src={`${IMG_BASE}${logoImg.url}`}
+            alt={logoImg.alt_text || university.name}
+            className="w-[60px] h-[60px] lg:w-[84px] lg:h-[84px]"
+            style={{
+              borderRadius: 20,
+              background: "#fff",
+              objectFit: "contain",
+              flexShrink: 0,
+              padding: 4,
+            }}
+          />
+        ) : (
+          <div
+            className="w-[60px] h-[60px] lg:w-[84px] lg:h-[84px]"
+            style={{
+              borderRadius: 20,
+              background: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 28,
+              fontWeight: 800,
+              color: accent,
+              flexShrink: 0,
+            }}
+          >
+            {initials}
+          </div>
+        )}
 
         <div style={{ flex: 1 }}>
           <div
@@ -122,25 +487,29 @@ export default function UniversityDetailPage() {
               marginBottom: 6,
             }}
           >
-            <span
-              style={{
-                background: "rgba(255,255,255,.22)",
-                backdropFilter: "blur(8px)",
-                color: "#fff",
-                fontSize: 12,
-                fontWeight: 700,
-                padding: "3px 10px",
-                borderRadius: 999,
-              }}
-            >
-              #{uni.rank} QS
-            </span>
+            {university.university_type && (
+              <span
+                style={{
+                  background: "rgba(255,255,255,.22)",
+                  backdropFilter: "blur(8px)",
+                  color: "#fff",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  padding: "3px 10px",
+                  borderRadius: 999,
+                }}
+              >
+                {university.university_type}
+              </span>
+            )}
             <span style={{ color: "rgba(255,255,255,.82)", fontSize: 13.5 }}>
-              {uni.city}, {uni.country}
+              {university.city?.name}
+              {university.city?.name && university.country?.name ? ", " : ""}
+              {university.country?.name}
             </span>
           </div>
           <h1
-            className="text-[26px] lg:text-[38px]"
+            className="text-[20px] lg:text-[38px]"
             style={{
               fontWeight: 800,
               color: "#fff",
@@ -148,7 +517,7 @@ export default function UniversityDetailPage() {
               lineHeight: 1.15,
             }}
           >
-            {uni.name}
+            {university.name}
           </h1>
         </div>
       </div>
@@ -158,27 +527,27 @@ export default function UniversityDetailPage() {
   /* ─── Quick Stats ─── */
   const stats = [
     {
-      label: "QS Ranking",
-      value: `#${uni.rank}`,
-      sub: "QS World Rankings",
+      label: "Courses",
+      value: `${courses.length}`,
+      sub: "Available programs",
       color: "var(--color-navy)",
     },
     {
-      label: "Satisfaction",
-      value: `${uni.sat}%`,
-      sub: "Student satisfaction",
+      label: "Faculties",
+      value: `${university.faculties?.length || 0}`,
+      sub: "Academic departments",
       color: "var(--color-green)",
     },
     {
-      label: "Employment",
-      value: `${uni.emp}%`,
-      sub: "Graduate employment",
+      label: "Scholarships",
+      value: `${scholarships.length}`,
+      sub: "Financial aid options",
       color: "var(--color-navy)",
     },
     {
-      label: "Match",
-      value: `${uni.match}%`,
-      sub: "Profile match score",
+      label: "Intakes",
+      value: `${intakes.length}`,
+      sub: "Upcoming sessions",
       color: "var(--color-blue)",
     },
   ];
@@ -188,7 +557,7 @@ export default function UniversityDetailPage() {
       className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 px-4 lg:px-7"
       style={{
         maxWidth: 1160,
-        margin: "-30px auto 0",
+        margin: "-14px auto 0",
         position: "relative",
         zIndex: 10,
       }}
@@ -292,7 +661,7 @@ export default function UniversityDetailPage() {
             margin: "0 0 12px",
           }}
         >
-          About {uni.name}
+          About {university.name}
         </h2>
         <p
           style={{
@@ -302,23 +671,20 @@ export default function UniversityDetailPage() {
             margin: "0 0 24px",
           }}
         >
-          {uni.name} is a world-renowned institution ranked #{uni.rank} globally
-          by QS World Rankings. Located in {uni.city}, {uni.country}, it offers
-          exceptional academic programs, cutting-edge research facilities, and a
-          vibrant international community. With a {uni.sat}% student
-          satisfaction rate and {uni.emp}% graduate employment rate, it
-          consistently delivers outstanding outcomes for international students.
+          {university.description ||
+            `${university.name} is located in ${university.city?.name || ""}, ${university.country?.name || ""}. It offers ${courses.length} programs across ${university.faculties?.length || 0} faculties with ${scholarships.length} scholarship opportunities for international students.`}
         </p>
 
         {/* 2x2 info cards */}
-        <div
-          className="grid grid-cols-1 md:grid-cols-2 gap-3.5"
-        >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
           {[
             {
               icon: "🎓",
               title: "Scholarships",
-              desc: uni.schShort + " available for international students",
+              desc:
+                schCount > 0
+                  ? `${schCount} scholarship${schCount > 1 ? "s" : ""} available for students`
+                  : "Contact university for scholarship info",
             },
             {
               icon: "🏛️",
@@ -356,49 +722,93 @@ export default function UniversityDetailPage() {
               >
                 {c.title}
               </div>
-              <div style={{ fontSize: 13, color: "var(--color-sub)", lineHeight: 1.55 }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "var(--color-sub)",
+                  lineHeight: 1.55,
+                }}
+              >
                 {c.desc}
               </div>
             </div>
           ))}
         </div>
+
+        {/* Intakes section */}
+        {intakes.length > 0 && (
+          <div style={{ marginTop: 28 }}>
+            <h3
+              style={{
+                fontSize: 17,
+                fontWeight: 800,
+                color: "var(--color-navy)",
+                margin: "0 0 14px",
+              }}
+            >
+              Upcoming intakes
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {intakes.map((intake) => (
+                <div
+                  key={intake.id}
+                  style={{
+                    background: "var(--color-card)",
+                    borderRadius: 14,
+                    padding: "14px 18px",
+                    border: "1px solid var(--color-line)",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: "var(--color-navy)",
+                      }}
+                    >
+                      {intake.name}
+                    </div>
+                    <div style={{ fontSize: 12.5, color: "var(--color-muted)" }}>
+                      {new Date(intake.start_date).toLocaleDateString("en-US", {
+                        month: "short",
+                        year: "numeric",
+                      })}{" "}
+                      -{" "}
+                      {new Date(intake.end_date).toLocaleDateString("en-US", {
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      padding: "3px 10px",
+                      borderRadius: 999,
+                      background:
+                        intake.status === "open"
+                          ? "rgba(15,157,88,.1)"
+                          : "rgba(234,88,12,.1)",
+                      color:
+                        intake.status === "open" ? "var(--color-green)" : "#ea580c",
+                    }}
+                  >
+                    {intake.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Right sidebar */}
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        {/* match card */}
-        <div
-          style={{
-            background: "var(--color-green-bg)",
-            borderRadius: 16,
-            padding: "20px",
-            border: "1px solid rgba(15,157,88,.18)",
-          }}
-        >
-          <div
-            style={{
-              fontSize: 12.5,
-              fontWeight: 600,
-              color: "var(--color-green)",
-              marginBottom: 4,
-            }}
-          >
-            Your match
-          </div>
-          <div
-            style={{
-              fontSize: 34,
-              fontWeight: 800,
-              color: "var(--color-green)",
-            }}
-          >
-            {uni.match}%
-          </div>
-          <div style={{ fontSize: 13.5, color: "var(--color-green)", marginTop: 2 }}>
-            Strong fit
-          </div>
-        </div>
-
         {/* at a glance */}
         <div
           style={{
@@ -419,10 +829,16 @@ export default function UniversityDetailPage() {
             At a glance
           </div>
           {[
-            { label: "IELTS", value: uni.ielts },
-            { label: "PTE", value: uni.pte },
-            { label: "Tuition/yr", value: uni.tuition },
-            { label: "Scholarship", value: uni.schShort },
+            {
+              label: "IELTS",
+              value: minIelts ? `${minIelts}+` : "Varies",
+            },
+            {
+              label: "PTE",
+              value: minPte ? `${minPte}+` : "Varies",
+            },
+            { label: "Tuition/yr", value: tuitionDisplay },
+            { label: "Scholarships", value: schSummary },
           ].map((r) => (
             <div
               key={r.label}
@@ -442,6 +858,76 @@ export default function UniversityDetailPage() {
             </div>
           ))}
         </div>
+
+        {/* contact info */}
+        {(university.website || university.email || university.phone) && (
+          <div
+            style={{
+              background: "var(--color-card)",
+              borderRadius: 16,
+              padding: "20px",
+              border: "1px solid var(--color-line)",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 15,
+                fontWeight: 700,
+                color: "var(--color-navy)",
+                marginBottom: 14,
+              }}
+            >
+              Contact
+            </div>
+            {university.website && (
+              <div
+                style={{
+                  padding: "8px 0",
+                  borderBottom: "1px solid var(--color-line)",
+                  fontSize: 13.5,
+                }}
+              >
+                <div style={{ color: "var(--color-sub)", marginBottom: 2 }}>
+                  Website
+                </div>
+                <a
+                  href={university.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "var(--color-blue)", fontWeight: 600 }}
+                >
+                  {university.website.replace(/^https?:\/\//, "")}
+                </a>
+              </div>
+            )}
+            {university.email && (
+              <div
+                style={{
+                  padding: "8px 0",
+                  borderBottom: "1px solid var(--color-line)",
+                  fontSize: 13.5,
+                }}
+              >
+                <div style={{ color: "var(--color-sub)", marginBottom: 2 }}>
+                  Email
+                </div>
+                <span style={{ color: "var(--color-navy)", fontWeight: 600 }}>
+                  {university.email}
+                </span>
+              </div>
+            )}
+            {university.phone && (
+              <div style={{ padding: "8px 0", fontSize: 13.5 }}>
+                <div style={{ color: "var(--color-sub)", marginBottom: 2 }}>
+                  Phone
+                </div>
+                <span style={{ color: "var(--color-navy)", fontWeight: 600 }}>
+                  {university.phone}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -449,7 +935,7 @@ export default function UniversityDetailPage() {
   /* ─── Tab: Courses ─── */
   const coursesTab = (
     <div>
-      {uniCourses.length === 0 ? (
+      {courses.length === 0 ? (
         <div
           style={{
             textAlign: "center",
@@ -461,83 +947,131 @@ export default function UniversityDetailPage() {
           No courses listed yet for this university.
         </div>
       ) : (
-        <div
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
-        >
-          {uniCourses.map((c) => (
-            <Link
-              key={c.id}
-              href={`/course/${c.id}`}
-              style={{ textDecoration: "none", color: "inherit" }}
-            >
-              <div
-                className="card-hover"
-                style={{
-                  background: "var(--color-card)",
-                  borderRadius: 16,
-                  padding: "18px 20px",
-                  border: "1px solid var(--color-line)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                  cursor: "pointer",
-                }}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {courses.map((c, idx) => {
+            const tintSet = COURSE_TINTS[idx % COURSE_TINTS.length];
+            const abbr = c.course_code
+              ? c.course_code.slice(0, 3).toUpperCase()
+              : c.name
+                  .split(" ")
+                  .map((w) => w[0])
+                  .join("")
+                  .slice(0, 3)
+                  .toUpperCase();
+            const durationYears =
+              c.duration_months >= 12
+                ? `${(c.duration_months / 12).toFixed(c.duration_months % 12 === 0 ? 0 : 1)} yr`
+                : `${c.duration_months} mo`;
+
+            return (
+              <Link
+                key={c.id}
+                href={`/course/${c.id}`}
+                style={{ textDecoration: "none", color: "inherit" }}
               >
                 <div
+                  className="card-hover"
                   style={{
-                    width: 46,
-                    height: 46,
-                    borderRadius: 12,
-                    background: c.tint,
-                    color: c.icColor,
+                    background: "var(--color-card)",
+                    borderRadius: 16,
+                    padding: "18px 20px",
+                    border: "1px solid var(--color-line)",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 15,
-                    fontWeight: 800,
-                    flexShrink: 0,
+                    gap: 14,
+                    cursor: "pointer",
                   }}
                 >
-                  {c.abbr}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
+                      width: 46,
+                      height: 46,
+                      borderRadius: 12,
+                      background: tintSet.tint,
+                      color: tintSet.color,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                       fontSize: 15,
                       fontWeight: 800,
-                      color: "var(--color-navy)",
-                      marginBottom: 3,
+                      flexShrink: 0,
                     }}
                   >
-                    {c.title}
+                    {abbr}
                   </div>
-                  <div style={{ fontSize: 12.5, color: "var(--color-muted)" }}>
-                    {c.level} · {c.duration} · {c.tuition}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontSize: 15,
+                        fontWeight: 800,
+                        color: "var(--color-navy)",
+                        marginBottom: 3,
+                      }}
+                    >
+                      {c.name}
+                    </div>
+                    <div
+                      style={{ fontSize: 12.5, color: "var(--color-muted)" }}
+                    >
+                      {c.degreeName ? `${c.degreeName} · ` : ""}
+                      {durationYears} ·{" "}
+                      {c.tuition_fee > 0
+                        ? `${c.currency} ${c.tuition_fee.toLocaleString()}/yr`
+                        : "Contact for fees"}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 11.5,
+                        color: "var(--color-blue)",
+                        marginTop: 2,
+                      }}
+                    >
+                      {c.facultyName}
+                    </div>
                   </div>
+                  <span
+                    style={{
+                      fontSize: 18,
+                      color: "var(--color-muted)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    →
+                  </span>
                 </div>
-                <span
-                  style={{
-                    fontSize: 18,
-                    color: "var(--color-muted)",
-                    flexShrink: 0,
-                  }}
-                >
-                  →
-                </span>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
   );
 
+  /* ─── Derive band scores from courses ─── */
+  const bandFields = ["speaking", "writing", "reading", "listening"] as const;
+  const ieltsBands: Record<string, number | null> = {};
+  const pteBands: Record<string, number | null> = {};
+  for (const band of bandFields) {
+    const ieltsVals = courses.map((c) => c[`ielts_${band}` as keyof ApiCourse] as number).filter((v) => v > 0);
+    ieltsBands[band] = ieltsVals.length > 0 ? Math.min(...ieltsVals) : null;
+    const pteVals = courses.map((c) => c[`pte_${band}` as keyof ApiCourse] as number).filter((v) => v > 0);
+    pteBands[band] = pteVals.length > 0 ? Math.min(...pteVals) : null;
+  }
+  const hasIeltsBands = bandFields.some((b) => ieltsBands[b] != null);
+  const toeflBands: Record<string, number | null> = {};
+  for (const band of bandFields) {
+    const toeflVals = courses.map((c) => c[`toefl_${band}` as keyof ApiCourse] as number).filter((v) => v > 0);
+    toeflBands[band] = toeflVals.length > 0 ? Math.min(...toeflVals) : null;
+  }
+  const toeflScores = courses.map((c) => c.toefl_requirement).filter((s) => s > 0);
+  const minToefl = toeflScores.length > 0 ? Math.min(...toeflScores) : null;
+  const hasPteBands = bandFields.some((b) => pteBands[b] != null);
+  const hasToeflBands = bandFields.some((b) => toeflBands[b] != null);
+
   /* ─── Tab: Requirements ─── */
   const requirementsTab = (
-    <div
-      className="grid grid-cols-1 md:grid-cols-2 gap-5"
-    >
-      {/* English proficiency */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      {/* IELTS */}
       <div
         style={{
           background: "var(--color-card)",
@@ -554,19 +1088,27 @@ export default function UniversityDetailPage() {
             margin: "0 0 16px",
           }}
         >
-          English proficiency
+          IELTS Academic
         </h3>
-        {[
-          { test: "IELTS Academic", score: uni.ielts, note: "Minimum overall" },
-          { test: "PTE Academic", score: uni.pte, note: "Minimum overall" },
-          {
-            test: "PTE / MOI",
-            score: "Accepted",
-            note: "Medium of instruction certificate",
-          },
-        ].map((r) => (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "12px 0",
+            borderBottom: "1px solid var(--color-line)",
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--color-navy)" }}>Overall</div>
+          </div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--color-blue)" }}>
+            {minIelts ? `${minIelts}+` : "Varies by course"}
+          </div>
+        </div>
+        {hasIeltsBands && bandFields.map((band) => (
           <div
-            key={r.test}
+            key={band}
             style={{
               display: "flex",
               justifyContent: "space-between",
@@ -575,28 +1117,123 @@ export default function UniversityDetailPage() {
               borderBottom: "1px solid var(--color-line)",
             }}
           >
-            <div>
-              <div
-                style={{
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: "var(--color-navy)",
-                }}
-              >
-                {r.test}
-              </div>
-              <div style={{ fontSize: 12.5, color: "var(--color-muted)" }}>
-                {r.note}
-              </div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--color-navy)", textTransform: "capitalize" }}>
+              {band}
             </div>
-            <div
-              style={{
-                fontSize: 15,
-                fontWeight: 700,
-                color: "var(--color-blue)",
-              }}
-            >
-              {r.score}
+            <div style={{ fontSize: 15, fontWeight: 700, color: "var(--color-blue)" }}>
+              {ieltsBands[band] != null ? `${ieltsBands[band]}+` : "—"}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* PTE */}
+      <div
+        style={{
+          background: "var(--color-card)",
+          borderRadius: 16,
+          padding: "22px 24px",
+          border: "1px solid var(--color-line)",
+        }}
+      >
+        <h3
+          style={{
+            fontSize: 16,
+            fontWeight: 800,
+            color: "var(--color-navy)",
+            margin: "0 0 16px",
+          }}
+        >
+          PTE Academic
+        </h3>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "12px 0",
+            borderBottom: "1px solid var(--color-line)",
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--color-navy)" }}>Overall</div>
+          </div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--color-blue)" }}>
+            {minPte ? `${minPte}+` : "Varies by course"}
+          </div>
+        </div>
+        {hasPteBands && bandFields.map((band) => (
+          <div
+            key={band}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "12px 0",
+              borderBottom: "1px solid var(--color-line)",
+            }}
+          >
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--color-navy)", textTransform: "capitalize" }}>
+              {band}
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "var(--color-blue)" }}>
+              {pteBands[band] != null ? `${pteBands[band]}+` : "—"}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* TOEFL */}
+      <div
+        style={{
+          background: "var(--color-card)",
+          borderRadius: 16,
+          padding: "22px 24px",
+          border: "1px solid var(--color-line)",
+        }}
+      >
+        <h3
+          style={{
+            fontSize: 16,
+            fontWeight: 800,
+            color: "var(--color-navy)",
+            margin: "0 0 16px",
+          }}
+        >
+          TOEFL iBT
+        </h3>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "12px 0",
+            borderBottom: "1px solid var(--color-line)",
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--color-navy)" }}>Overall</div>
+          </div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--color-blue)" }}>
+            {minToefl ? `${minToefl}+` : "Varies by course"}
+          </div>
+        </div>
+        {hasToeflBands && bandFields.map((band) => (
+          <div
+            key={band}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "12px 0",
+              borderBottom: "1px solid var(--color-line)",
+            }}
+          >
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--color-navy)", textTransform: "capitalize" }}>
+              {band}
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "var(--color-blue)" }}>
+              {toeflBands[band] != null ? `${toeflBands[band]}+` : "—"}
             </div>
           </div>
         ))}
@@ -626,7 +1263,7 @@ export default function UniversityDetailPage() {
           "Official academic transcripts",
           "Statement of purpose",
           "Two recommendation letters",
-          "Updated CV / résumé",
+          "Updated CV / resume",
           "Valid passport copy",
         ].map((item) => (
           <div
@@ -660,71 +1297,97 @@ export default function UniversityDetailPage() {
   /* ─── Tab: Scholarships ─── */
   const scholarshipsTab = (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {SCHOLARSHIPS.map((s) => (
+      {scholarships.length === 0 ? (
         <div
-          key={s.name}
           style={{
-            background: "var(--color-card)",
-            borderRadius: 16,
-            padding: "20px 24px",
-            border: "1px solid var(--color-line)",
-            borderLeft: "4px solid var(--color-green)",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            textAlign: "center",
+            padding: "48px 0",
+            color: "var(--color-muted)",
+            fontSize: 14.5,
           }}
         >
-          <div>
-            <div
-              style={{
-                fontSize: 16,
-                fontWeight: 800,
-                color: "var(--color-navy)",
-                marginBottom: 4,
-              }}
-            >
-              {s.name}
-            </div>
-            <div style={{ fontSize: 13, color: "var(--color-sub)" }}>
-              {s.who} · Deadline: {s.deadline}
-            </div>
-          </div>
+          No scholarships listed yet for this university.
+        </div>
+      ) : (
+        scholarships.map((s) => (
           <div
+            key={s.id}
             style={{
-              fontSize: 22,
-              fontWeight: 800,
-              color: "var(--color-green)",
-              flexShrink: 0,
-              marginLeft: 24,
+              background: "var(--color-card)",
+              borderRadius: 16,
+              padding: "20px 24px",
+              border: "1px solid var(--color-line)",
+              borderLeft: "4px solid var(--color-green)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
-            {s.amount}
+            <div>
+              <div
+                style={{
+                  fontSize: 16,
+                  fontWeight: 800,
+                  color: "var(--color-navy)",
+                  marginBottom: 4,
+                }}
+              >
+                {s.name}
+              </div>
+              <div style={{ fontSize: 13, color: "var(--color-sub)" }}>
+                {s.type}
+                {s.deadline
+                  ? ` · Deadline: ${new Date(s.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+                  : ""}
+              </div>
+              {s.description && (
+                <div
+                  style={{
+                    fontSize: 12.5,
+                    color: "var(--color-muted)",
+                    marginTop: 4,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {s.description}
+                </div>
+              )}
+            </div>
+            <div
+              style={{
+                fontSize: 22,
+                fontWeight: 800,
+                color: "var(--color-green)",
+                flexShrink: 0,
+                marginLeft: 24,
+              }}
+            >
+              {s.percentage}%
+            </div>
           </div>
-        </div>
-      ))}
+        ))
+      )}
     </div>
   );
 
   /* ─── Tab: Accommodation ─── */
   const accommodationTab = (
-    <div
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-[18px]"
-    >
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-[18px]">
       {[
         {
           title: "On-campus housing",
           sub: "Fully furnished, meal plan included",
-          price: "৳9.5L/yr",
+          price: "Contact university",
         },
         {
           title: "Shared apartment",
           sub: "2-3 bedroom, close to campus",
-          price: "৳7.2L/yr",
+          price: "Contact university",
         },
         {
           title: "Homestay",
           sub: "With local family, meals included",
-          price: "৳8.0L/yr",
+          price: "Contact university",
         },
       ].map((a) => (
         <div
@@ -785,18 +1448,84 @@ export default function UniversityDetailPage() {
   );
 
   /* ─── Tab: Gallery ─── */
-  const galleryTab = (
-    <div
-      style={{
-        textAlign: "center",
-        padding: "60px 0",
-        color: "var(--color-muted)",
-        fontSize: 14.5,
-      }}
-    >
-      Gallery coming soon — campus photos and virtual tours.
-    </div>
-  );
+  const galleryTab =
+    galleryImages.length === 0 ? (
+      <div
+        style={{
+          textAlign: "center",
+          padding: "60px 0",
+          color: "var(--color-muted)",
+          fontSize: 14.5,
+        }}
+      >
+        Gallery coming soon — campus photos and virtual tours.
+      </div>
+    ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-[18px]">
+        {galleryImages
+          .sort((a, b) => a.sort_order - b.sort_order)
+          .map((img) => (
+            <div
+              key={img.id}
+              className="group"
+              style={{
+                borderRadius: 16,
+                overflow: "hidden",
+                border: "1px solid var(--color-line)",
+                background: "var(--color-card)",
+                position: "relative",
+                aspectRatio: "16/10",
+                cursor: "pointer",
+              }}
+            >
+              <img
+                src={`${IMG_BASE}${img.url}`}
+                alt={img.alt_text || "Campus photo"}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                  transition: "transform 0.3s ease",
+                }}
+                className="group-hover:scale-105"
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "linear-gradient(transparent 50%, rgba(0,0,0,0.55))",
+                  opacity: 0,
+                  transition: "opacity 0.25s ease",
+                  pointerEvents: "none",
+                }}
+                className="group-hover:!opacity-100"
+              />
+              {img.alt_text && (
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 12,
+                    left: 14,
+                    right: 14,
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: "#fff",
+                    opacity: 0,
+                    transition: "opacity 0.25s ease",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                  className="group-hover:!opacity-100"
+                >
+                  {img.alt_text}
+                </div>
+              )}
+            </div>
+          ))}
+      </div>
+    );
 
   /* ─── Tab: FAQ ─── */
   const faqTab = (
@@ -837,9 +1566,7 @@ export default function UniversityDetailPage() {
 
   /* ─── Tab: Reviews ─── */
   const reviewsTab = (
-    <div
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-[18px]"
-    >
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-[18px]">
       {REVIEWS.map((r, i) => (
         <div
           key={i}
@@ -913,7 +1640,9 @@ export default function UniversityDetailPage() {
 
   /* ─── Tab: AI Assistant ─── */
   const aiAssistantTab = (
-    <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}>
+    <div
+      style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}
+    >
       <div
         style={{
           maxWidth: 640,
@@ -933,7 +1662,7 @@ export default function UniversityDetailPage() {
             margin: "0 0 10px",
           }}
         >
-          Ask about {uni.name}
+          Ask about {university.name}
         </h2>
         <p
           style={{
@@ -943,9 +1672,8 @@ export default function UniversityDetailPage() {
             margin: "0 0 28px",
           }}
         >
-          Get instant answers about admission requirements, scholarships,
-          campus life, and more — powered by AI trained on official university
-          data.
+          Get instant answers about admission requirements, scholarships, campus
+          life, and more — powered by AI trained on official university data.
         </p>
         <Link
           href="/chat"
@@ -1025,10 +1753,10 @@ export default function UniversityDetailPage() {
               color: "var(--color-navy)",
             }}
           >
-            {uni.name}
+            {university.name}
           </div>
           <div style={{ fontSize: 12.5, color: "var(--color-muted)" }}>
-            Tuition from {uni.tuition}/yr
+            Tuition from {tuitionDisplay}/yr
           </div>
         </div>
         <div className="flex items-center gap-2 lg:gap-2.5 flex-wrap">
@@ -1066,7 +1794,8 @@ export default function UniversityDetailPage() {
           >
             ✦ Ask AI
           </Link>
-          <button
+          <Link
+            href={`/apply?university_id=${university.id}`}
             style={{
               padding: "9px 22px",
               borderRadius: 10,
@@ -1076,10 +1805,11 @@ export default function UniversityDetailPage() {
               fontSize: 13.5,
               fontWeight: 700,
               cursor: "pointer",
+              textDecoration: "none",
             }}
           >
             Apply now
-          </button>
+          </Link>
         </div>
       </div>
     </div>

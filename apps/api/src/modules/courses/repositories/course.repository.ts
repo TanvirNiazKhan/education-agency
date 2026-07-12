@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { Course } from '../entities/course.entity';
 
 @Injectable()
@@ -10,16 +10,23 @@ export class CourseRepository {
     private readonly repository: Repository<Course>,
   ) {}
 
-  async findAll(): Promise<Course[]> {
+  async findAll(search?: string, includeInactive = false): Promise<Course[]> {
     return this.repository.find({
-      where: { is_active: true },
+      where: {
+        ...(!includeInactive && { is_active: true }),
+        ...(search && { name: ILike(`%${search}%`) }),
+      },
       relations: { faculty: true, degree: true },
     });
   }
 
-  async findByFacultyId(facultyId: string): Promise<Course[]> {
+  async findByFacultyId(facultyId: string, search?: string, includeInactive = false): Promise<Course[]> {
     return this.repository.find({
-      where: { faculty_id: facultyId, is_active: true },
+      where: {
+        faculty_id: facultyId,
+        ...(!includeInactive && { is_active: true }),
+        ...(search && { name: ILike(`%${search}%`) }),
+      },
       relations: { degree: true },
     });
   }
@@ -34,7 +41,7 @@ export class CourseRepository {
   async findById(id: string): Promise<Course | null> {
     return this.repository.findOne({
       where: { id },
-      relations: { faculty: true, degree: true },
+      relations: { faculty: { university: { country: true, city: true } }, degree: true },
     });
   }
 

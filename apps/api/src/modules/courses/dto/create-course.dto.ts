@@ -45,15 +45,75 @@ export class CreateCourseDto {
   @IsOptional()
   ielts_requirement?: number;
 
+  @ApiPropertyOptional({ example: 6.0 })
+  @IsNumber()
+  @IsOptional()
+  ielts_speaking?: number;
+
+  @ApiPropertyOptional({ example: 6.0 })
+  @IsNumber()
+  @IsOptional()
+  ielts_writing?: number;
+
+  @ApiPropertyOptional({ example: 6.0 })
+  @IsNumber()
+  @IsOptional()
+  ielts_reading?: number;
+
+  @ApiPropertyOptional({ example: 6.0 })
+  @IsNumber()
+  @IsOptional()
+  ielts_listening?: number;
+
   @ApiPropertyOptional({ example: 58.0 })
   @IsNumber()
   @IsOptional()
   pte_requirement?: number;
 
+  @ApiPropertyOptional({ example: 50.0 })
+  @IsNumber()
+  @IsOptional()
+  pte_speaking?: number;
+
+  @ApiPropertyOptional({ example: 50.0 })
+  @IsNumber()
+  @IsOptional()
+  pte_writing?: number;
+
+  @ApiPropertyOptional({ example: 50.0 })
+  @IsNumber()
+  @IsOptional()
+  pte_reading?: number;
+
+  @ApiPropertyOptional({ example: 50.0 })
+  @IsNumber()
+  @IsOptional()
+  pte_listening?: number;
+
   @ApiPropertyOptional({ example: 79.0 })
   @IsNumber()
   @IsOptional()
   toefl_requirement?: number;
+
+  @ApiPropertyOptional({ example: 20.0 })
+  @IsNumber()
+  @IsOptional()
+  toefl_speaking?: number;
+
+  @ApiPropertyOptional({ example: 20.0 })
+  @IsNumber()
+  @IsOptional()
+  toefl_writing?: number;
+
+  @ApiPropertyOptional({ example: 20.0 })
+  @IsNumber()
+  @IsOptional()
+  toefl_reading?: number;
+
+  @ApiPropertyOptional({ example: 20.0 })
+  @IsNumber()
+  @IsOptional()
+  toefl_listening?: number;
 
   @ApiPropertyOptional({ example: 'This course covers...' })
   @IsString()

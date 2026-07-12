@@ -8,7 +8,7 @@ import {
   BarChart3,
   GraduationCap,
   BookOpen,
-  Award,
+
   Globe,
   MapPin,
   Layers,
@@ -36,7 +36,7 @@ const mainNavItems = [
   },
   { label: "Universities", href: "/universities", icon: GraduationCap },
   { label: "Courses", href: "/courses", icon: BookOpen },
-  { label: "Scholarships", href: "/scholarships", icon: Award },
+
   { label: "Countries", href: "/countries", icon: Globe },
   { label: "Cities", href: "/cities", icon: MapPin },
   { label: "Degrees", href: "/degrees", icon: Layers },

@@ -6,12 +6,12 @@ import { City } from './entities/city.entity';
 export class CitiesService {
   constructor(private readonly cityRepository: CityRepository) {}
 
-  async findAll(): Promise<City[]> {
-    return this.cityRepository.findAll();
+  async findAll(search?: string): Promise<City[]> {
+    return this.cityRepository.findAll(search);
   }
 
-  async findByCountryId(countryId: string): Promise<City[]> {
-    return this.cityRepository.findByCountryId(countryId);
+  async findByCountryId(countryId: string, search?: string): Promise<City[]> {
+    return this.cityRepository.findByCountryId(countryId, search);
   }
 
   async findById(id: string): Promise<City> {

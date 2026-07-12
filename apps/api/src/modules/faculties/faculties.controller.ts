@@ -13,9 +13,14 @@ export class FacultiesController {
   constructor(private readonly facultiesService: FacultiesService) {}
 
   @Get()
-  async findAll(@Query('university_id') universityId?: string): Promise<Faculty[]> {
-    if (universityId) return this.facultiesService.findByUniversityId(universityId);
-    return this.facultiesService.findAll();
+  async findAll(
+    @Query('university_id') universityId?: string,
+    @Query('q') search?: string,
+    @Query('include_inactive') includeInactive?: string,
+  ): Promise<Faculty[]> {
+    const inclInactive = includeInactive === 'true';
+    if (universityId) return this.facultiesService.findByUniversityId(universityId, search, inclInactive);
+    return this.facultiesService.findAll(search, inclInactive);
   }
 
   @Get(':id')

@@ -10,7 +10,9 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     throw new Error(err.message || `API error ${res.status}`);
   }
   if (res.status === 204) return undefined as T;
-  return res.json();
+  const text = await res.text();
+  if (!text) return undefined as T;
+  return JSON.parse(text);
 }
 
 export const api = {
@@ -98,8 +100,20 @@ export interface Course {
   duration_months: number;
   intake: string | null;
   ielts_requirement: number | null;
+  ielts_speaking: number | null;
+  ielts_writing: number | null;
+  ielts_reading: number | null;
+  ielts_listening: number | null;
   pte_requirement: number | null;
+  pte_speaking: number | null;
+  pte_writing: number | null;
+  pte_reading: number | null;
+  pte_listening: number | null;
   toefl_requirement: number | null;
+  toefl_speaking: number | null;
+  toefl_writing: number | null;
+  toefl_reading: number | null;
+  toefl_listening: number | null;
   overview: string | null;
   scholarship_available: boolean;
   faculty_id: string;
@@ -122,8 +136,13 @@ export const countriesApi = {
 };
 
 export const citiesApi = {
-  list: (countryId?: string) =>
-    api.get<City[]>(countryId ? `/cities?country_id=${countryId}` : "/cities"),
+  list: (countryId?: string, search?: string) => {
+    const params = new URLSearchParams();
+    if (countryId) params.set("country_id", countryId);
+    if (search) params.set("q", search);
+    const qs = params.toString();
+    return api.get<City[]>(qs ? `/cities?${qs}` : "/cities");
+  },
   get: (id: string) => api.get<City>(`/cities/${id}`),
   create: (data: { name: string; state?: string; country_id: string }) =>
     api.post<City>("/cities", data),
@@ -151,11 +170,17 @@ export type CreateUniversityData = {
 };
 
 export const universitiesApi = {
-  list: (countryId?: string) =>
-    api.get<University[]>(countryId ? `/universities?country_id=${countryId}` : "/universities"),
+  list: (countryId?: string, search?: string) => {
+    const params = new URLSearchParams();
+    if (countryId) params.set("country_id", countryId);
+    if (search) params.set("q", search);
+    params.set("include_inactive", "true");
+    const qs = params.toString();
+    return api.get<University[]>(`/universities?${qs}`);
+  },
   get: (id: string) => api.get<University>(`/universities/${id}`),
   create: (data: CreateUniversityData) => api.post<University>("/universities", data),
-  update: (id: string, data: Partial<CreateUniversityData>) =>
+  update: (id: string, data: Partial<CreateUniversityData> & { is_active?: boolean }) =>
     api.put<University>(`/universities/${id}`, data),
   delete: (id: string) => api.delete<void>(`/universities/${id}`),
 };
@@ -169,12 +194,18 @@ export const degreesApi = {
 };
 
 export const facultiesApi = {
-  list: (universityId?: string) =>
-    api.get<Faculty[]>(universityId ? `/faculties?university_id=${universityId}` : "/faculties"),
+  list: (universityId?: string, search?: string) => {
+    const params = new URLSearchParams();
+    if (universityId) params.set("university_id", universityId);
+    if (search) params.set("q", search);
+    params.set("include_inactive", "true");
+    const qs = params.toString();
+    return api.get<Faculty[]>(`/faculties?${qs}`);
+  },
   get: (id: string) => api.get<Faculty>(`/faculties/${id}`),
   create: (data: { name: string; description?: string; university_id: string }) =>
     api.post<Faculty>("/faculties", data),
-  update: (id: string, data: Partial<{ name: string; description: string; university_id: string }>) =>
+  update: (id: string, data: Partial<{ name: string; description: string; university_id: string }> & { is_active?: boolean }) =>
     api.put<Faculty>(`/faculties/${id}`, data),
   delete: (id: string) => api.delete<void>(`/faculties/${id}`),
 };
@@ -189,18 +220,143 @@ export type CreateCourseData = {
   degree_id: string;
   intake?: string;
   ielts_requirement?: number;
+  ielts_speaking?: number;
+  ielts_writing?: number;
+  ielts_reading?: number;
+  ielts_listening?: number;
   pte_requirement?: number;
+  pte_speaking?: number;
+  pte_writing?: number;
+  pte_reading?: number;
+  pte_listening?: number;
   toefl_requirement?: number;
+  toefl_speaking?: number;
+  toefl_writing?: number;
+  toefl_reading?: number;
+  toefl_listening?: number;
   overview?: string;
   scholarship_available?: boolean;
 };
 
 export const coursesApi = {
-  list: (facultyId?: string) =>
-    api.get<Course[]>(facultyId ? `/courses?faculty_id=${facultyId}` : "/courses"),
+  list: (facultyId?: string, search?: string) => {
+    const params = new URLSearchParams();
+    if (facultyId) params.set("faculty_id", facultyId);
+    if (search) params.set("q", search);
+    params.set("include_inactive", "true");
+    const qs = params.toString();
+    return api.get<Course[]>(`/courses?${qs}`);
+  },
   get: (id: string) => api.get<Course>(`/courses/${id}`),
   create: (data: CreateCourseData) => api.post<Course>("/courses", data),
-  update: (id: string, data: Partial<CreateCourseData>) =>
+  update: (id: string, data: Partial<CreateCourseData> & { is_active?: boolean }) =>
     api.put<Course>(`/courses/${id}`, data),
   delete: (id: string) => api.delete<void>(`/courses/${id}`),
+};
+
+export interface UniversityImage {
+  id: string;
+  url: string;
+  alt_text: string | null;
+  type: string | null;
+  sort_order: number;
+  university_id: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ScholarshipScope {
+  id: string;
+  scope_type: string;
+  scope_id: string;
+  scholarship_id: string;
+  created_at: string;
+}
+
+export interface Scholarship {
+  id: string;
+  name: string;
+  description: string | null;
+  percentage: number | null;
+  type: string | null;
+  deadline: string | null;
+  university_id: string;
+  scopes: ScholarshipScope[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CreateScholarshipData = {
+  name: string;
+  university_id: string;
+  description?: string;
+  percentage?: number;
+  type?: string;
+  deadline?: string;
+  scopes?: { scope_type: string; scope_id: string }[];
+};
+
+export const scholarshipsApi = {
+  list: (universityId: string) =>
+    api.get<Scholarship[]>(`/scholarships?university_id=${universityId}`),
+  get: (id: string) => api.get<Scholarship>(`/scholarships/${id}`),
+  create: (data: CreateScholarshipData) => api.post<Scholarship>("/scholarships", data),
+  update: (id: string, data: Partial<CreateScholarshipData>) =>
+    api.put<Scholarship>(`/scholarships/${id}`, data),
+  delete: (id: string) => api.delete<void>(`/scholarships/${id}`),
+};
+
+export interface Intake {
+  id: string;
+  name: string;
+  start_date: string | null;
+  end_date: string | null;
+  deadline: string | null;
+  status: string | null;
+  university_id: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CreateIntakeData = {
+  name: string;
+  university_id: string;
+  start_date?: string;
+  end_date?: string;
+  deadline?: string;
+  status?: string;
+};
+
+export const intakesApi = {
+  list: (universityId: string) =>
+    api.get<Intake[]>(`/intakes?university_id=${universityId}`),
+  get: (id: string) => api.get<Intake>(`/intakes/${id}`),
+  create: (data: CreateIntakeData) => api.post<Intake>("/intakes", data),
+  update: (id: string, data: Partial<CreateIntakeData>) =>
+    api.put<Intake>(`/intakes/${id}`, data),
+  delete: (id: string) => api.delete<void>(`/intakes/${id}`),
+};
+
+export const universityImagesApi = {
+  list: (universityId: string) =>
+    api.get<UniversityImage[]>(`/university-images?university_id=${universityId}`),
+  upload: async (universityId: string, files: File[], type?: string) => {
+    const formData = new FormData();
+    formData.append("university_id", universityId);
+    if (type) formData.append("type", type);
+    files.forEach((f) => formData.append("images", f));
+    const res = await fetch(`${API_BASE}/university-images`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `Upload failed ${res.status}`);
+    }
+    return res.json() as Promise<UniversityImage[]>;
+  },
+  delete: (id: string) => api.delete<void>(`/university-images/${id}`),
 };

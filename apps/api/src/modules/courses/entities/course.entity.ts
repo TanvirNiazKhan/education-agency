@@ -26,11 +26,47 @@ export class Course extends BaseEntity {
   @Column({ type: 'decimal', precision: 3, scale: 1, nullable: true })
   ielts_requirement: number;
 
+  @Column({ type: 'decimal', precision: 3, scale: 1, nullable: true })
+  ielts_speaking: number;
+
+  @Column({ type: 'decimal', precision: 3, scale: 1, nullable: true })
+  ielts_writing: number;
+
+  @Column({ type: 'decimal', precision: 3, scale: 1, nullable: true })
+  ielts_reading: number;
+
+  @Column({ type: 'decimal', precision: 3, scale: 1, nullable: true })
+  ielts_listening: number;
+
   @Column({ type: 'decimal', precision: 4, scale: 1, nullable: true })
   pte_requirement: number;
 
+  @Column({ type: 'decimal', precision: 4, scale: 1, nullable: true })
+  pte_speaking: number;
+
+  @Column({ type: 'decimal', precision: 4, scale: 1, nullable: true })
+  pte_writing: number;
+
+  @Column({ type: 'decimal', precision: 4, scale: 1, nullable: true })
+  pte_reading: number;
+
+  @Column({ type: 'decimal', precision: 4, scale: 1, nullable: true })
+  pte_listening: number;
+
   @Column({ type: 'decimal', precision: 5, scale: 1, nullable: true })
   toefl_requirement: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 1, nullable: true })
+  toefl_speaking: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 1, nullable: true })
+  toefl_writing: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 1, nullable: true })
+  toefl_reading: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 1, nullable: true })
+  toefl_listening: number;
 
   @Column({ type: 'text', nullable: true })
   overview: string;

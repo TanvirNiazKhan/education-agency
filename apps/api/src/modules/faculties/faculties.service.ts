@@ -6,12 +6,12 @@ import { Faculty } from './entities/faculty.entity';
 export class FacultiesService {
   constructor(private readonly facultyRepository: FacultyRepository) {}
 
-  async findAll(): Promise<Faculty[]> {
-    return this.facultyRepository.findAll();
+  async findAll(search?: string, includeInactive = false): Promise<Faculty[]> {
+    return this.facultyRepository.findAll(search, includeInactive);
   }
 
-  async findByUniversityId(universityId: string): Promise<Faculty[]> {
-    return this.facultyRepository.findByUniversityId(universityId);
+  async findByUniversityId(universityId: string, search?: string, includeInactive = false): Promise<Faculty[]> {
+    return this.facultyRepository.findByUniversityId(universityId, search, includeInactive);
   }
 
   async findById(id: string): Promise<Faculty> {

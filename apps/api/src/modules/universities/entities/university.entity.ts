@@ -3,6 +3,9 @@ import { BaseEntity } from '@common/entities/base.entity';
 import { Country } from '@modules/countries/entities/country.entity';
 import { City } from '@modules/cities/entities/city.entity';
 import { Faculty } from '@modules/faculties/entities/faculty.entity';
+import { UniversityImage } from '@modules/university-images/entities/university-image.entity';
+import { Scholarship } from '@modules/scholarships/entities/scholarship.entity';
+import { Intake } from '@modules/intakes/entities/intake.entity';
 
 @Entity('universities')
 export class University extends BaseEntity {
@@ -61,4 +64,13 @@ export class University extends BaseEntity {
 
   @OneToMany(() => Faculty, (faculty) => faculty.university)
   faculties: Faculty[];
+
+  @OneToMany(() => UniversityImage, (image) => image.university)
+  images: UniversityImage[];
+
+  @OneToMany(() => Scholarship, (scholarship) => scholarship.university)
+  scholarships: Scholarship[];
+
+  @OneToMany(() => Intake, (intake) => intake.university)
+  intakes: Intake[];
 }

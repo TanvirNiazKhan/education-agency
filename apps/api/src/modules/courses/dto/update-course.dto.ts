@@ -1,4 +1,11 @@
 import { PartialType } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsOptional } from 'class-validator';
 import { CreateCourseDto } from './create-course.dto';
 
-export class UpdateCourseDto extends PartialType(CreateCourseDto) {}
+export class UpdateCourseDto extends PartialType(CreateCourseDto) {
+  @ApiPropertyOptional({ example: true })
+  @IsBoolean()
+  @IsOptional()
+  is_active?: boolean;
+}

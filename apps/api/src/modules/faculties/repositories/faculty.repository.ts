@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { Faculty } from '../entities/faculty.entity';
 
 @Injectable()
@@ -10,16 +10,24 @@ export class FacultyRepository {
     private readonly repository: Repository<Faculty>,
   ) {}
 
-  async findAll(): Promise<Faculty[]> {
+  async findAll(search?: string, includeInactive = false): Promise<Faculty[]> {
     return this.repository.find({
-      where: { is_active: true },
+      where: {
+        ...(!includeInactive && { is_active: true }),
+        ...(search && { name: ILike(`%${search}%`) }),
+      },
       relations: { university: true },
     });
   }
 
-  async findByUniversityId(universityId: string): Promise<Faculty[]> {
+  async findByUniversityId(universityId: string, search?: string, includeInactive = false): Promise<Faculty[]> {
     return this.repository.find({
-      where: { university_id: universityId, is_active: true },
+      where: {
+        university_id: universityId,
+        ...(!includeInactive && { is_active: true }),
+        ...(search && { name: ILike(`%${search}%`) }),
+      },
+      relations: { university: true },
     });
   }
 

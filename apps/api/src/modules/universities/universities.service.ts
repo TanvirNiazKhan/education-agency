@@ -8,16 +8,16 @@ export class UniversitiesService {
     private readonly universityRepository: UniversityRepository,
   ) {}
 
-  async findAll(): Promise<University[]> {
-    return this.universityRepository.findAll();
+  async findAll(search?: string, includeInactive = false): Promise<University[]> {
+    return this.universityRepository.findAll(search, includeInactive);
   }
 
   async findFeatured(): Promise<University[]> {
     return this.universityRepository.findFeatured();
   }
 
-  async findByCountryId(countryId: string): Promise<University[]> {
-    return this.universityRepository.findByCountryId(countryId);
+  async findByCountryId(countryId: string, search?: string): Promise<University[]> {
+    return this.universityRepository.findByCountryId(countryId, search);
   }
 
   async findById(id: string): Promise<University> {

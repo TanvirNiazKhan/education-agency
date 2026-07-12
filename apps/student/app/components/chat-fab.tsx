@@ -7,7 +7,7 @@ export default function ChatFab() {
     <Link
       href="/chat"
       aria-label="Open AI Chat"
-      className="animate-ring hidden md:flex w-[60px] h-[60px] right-[26px] bottom-[26px]"
+      className="animate-ring hidden md:flex w-[60px] h-[60px] right-[26px] bottom-[80px]"
       style={{
         position: "fixed",
         zIndex: 70,

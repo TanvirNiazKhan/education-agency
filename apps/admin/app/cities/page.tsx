@@ -43,13 +43,14 @@ export default function CitiesPage() {
   const [form, setForm] = useState<FormData>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const [countryPickerOpen, setCountryPickerOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
       const [citiesData, countriesData] = await Promise.all([
-        citiesApi.list(filterCountry || undefined),
+        citiesApi.list(filterCountry || undefined, search || undefined),
         countriesApi.list(),
       ]);
       setCities(citiesData);
@@ -59,7 +60,7 @@ export default function CitiesPage() {
     } finally {
       setLoading(false);
     }
-  }, [filterCountry]);
+  }, [filterCountry, search]);
 
   useEffect(() => {
     load();
@@ -130,6 +131,22 @@ export default function CitiesPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search cities..."
+            style={{
+              height: "34px",
+              padding: "0 12px",
+              fontSize: "12.5px",
+              border: "1px solid var(--c-border-input)",
+              borderRadius: "9px",
+              background: "var(--c-bg-elevated)",
+              color: "var(--c-text-1)",
+              outline: "none",
+              width: "180px",
+            }}
+          />
           {/* Country filter */}
           <div className="relative">
             <button

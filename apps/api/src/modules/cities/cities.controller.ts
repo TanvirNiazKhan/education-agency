@@ -23,11 +23,12 @@ export class CitiesController {
   @Get()
   async findAll(
     @Query('country_id') countryId?: string,
+    @Query('q') search?: string,
   ): Promise<City[]> {
     if (countryId) {
-      return this.citiesService.findByCountryId(countryId);
+      return this.citiesService.findByCountryId(countryId, search);
     }
-    return this.citiesService.findAll();
+    return this.citiesService.findAll(search);
   }
 
   @Get(':id')

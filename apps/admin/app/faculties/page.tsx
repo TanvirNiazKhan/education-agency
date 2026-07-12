@@ -50,13 +50,14 @@ export default function FacultiesPage() {
   const [form, setForm] = useState<FormData>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const [uniPickerOpen, setUniPickerOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
       const [facData, uniData] = await Promise.all([
-        facultiesApi.list(filterUni || undefined),
+        facultiesApi.list(filterUni || undefined, search || undefined),
         universitiesApi.list(),
       ]);
       setFaculties(facData);
@@ -64,7 +65,7 @@ export default function FacultiesPage() {
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally { setLoading(false); }
-  }, [filterUni]);
+  }, [filterUni, search]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -108,6 +109,22 @@ export default function FacultiesPage() {
           <p style={{ margin: "5px 0 0", fontSize: "13px", color: "var(--c-text-3)" }}>Faculties per university</p>
         </div>
         <div className="flex items-center gap-2">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search faculties..."
+            style={{
+              height: "34px",
+              padding: "0 12px",
+              fontSize: "12.5px",
+              border: "1px solid var(--c-border-input)",
+              borderRadius: "9px",
+              background: "var(--c-bg-elevated)",
+              color: "var(--c-text-1)",
+              outline: "none",
+              width: "180px",
+            }}
+          />
           <div className="relative">
             <button onClick={() => setFilterOpen(!filterOpen)} className="flex items-center cursor-pointer hoverable"
               style={{ height: "34px", gap: "7px", padding: "0 12px", border: "1px solid var(--c-border-input)", borderRadius: "9px", background: "var(--c-bg-elevated)", fontSize: "12.5px", fontWeight: 550, color: "var(--c-text-1)" }}>

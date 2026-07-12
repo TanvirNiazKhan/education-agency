@@ -24,14 +24,16 @@ export class UniversitiesController {
   async findAll(
     @Query('country_id') countryId?: string,
     @Query('featured') featured?: string,
+    @Query('q') search?: string,
+    @Query('include_inactive') includeInactive?: string,
   ): Promise<University[]> {
     if (featured === 'true') {
       return this.universitiesService.findFeatured();
     }
     if (countryId) {
-      return this.universitiesService.findByCountryId(countryId);
+      return this.universitiesService.findByCountryId(countryId, search);
     }
-    return this.universitiesService.findAll();
+    return this.universitiesService.findAll(search, includeInactive === 'true');
   }
 
   @Get(':id')

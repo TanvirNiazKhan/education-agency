@@ -110,12 +110,13 @@ export default function CoursesPage() {
   const [form, setForm] = useState<FormData>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
       const [courseData, facultyData, degreeData] = await Promise.all([
-        coursesApi.list(filterFaculty || undefined),
+        coursesApi.list(filterFaculty || undefined, search || undefined),
         facultiesApi.list(),
         degreesApi.list(),
       ]);
@@ -125,7 +126,7 @@ export default function CoursesPage() {
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally { setLoading(false); }
-  }, [filterFaculty]);
+  }, [filterFaculty, search]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -196,6 +197,22 @@ export default function CoursesPage() {
           <p style={{ margin: "5px 0 0", fontSize: "13px", color: "var(--c-text-3)" }}>Course catalog — faculty + degree level</p>
         </div>
         <div className="flex items-center gap-2">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search courses..."
+            style={{
+              height: "34px",
+              padding: "0 12px",
+              fontSize: "12.5px",
+              border: "1px solid var(--c-border-input)",
+              borderRadius: "9px",
+              background: "var(--c-bg-elevated)",
+              color: "var(--c-text-1)",
+              outline: "none",
+              width: "180px",
+            }}
+          />
           <div className="relative">
             <button onClick={() => setFilterOpen(!filterOpen)} className="flex items-center cursor-pointer hoverable"
               style={{ height: "34px", gap: "7px", padding: "0 12px", border: "1px solid var(--c-border-input)", borderRadius: "9px", background: "var(--c-bg-elevated)", fontSize: "12.5px", fontWeight: 550, color: "var(--c-text-1)" }}>
