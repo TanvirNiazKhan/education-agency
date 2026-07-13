@@ -1,8 +1,19 @@
 import Link from "next/link";
-import type { University } from "../../lib/data";
+
+interface UniCard {
+  id: string;
+  name: string;
+  city: string;
+  country: string;
+  img: string;
+  match?: number;
+  rank?: number;
+  tuition?: string;
+  schShort?: string;
+}
 
 interface RecommendedUnisSectionProps {
-  unis: University[];
+  unis: UniCard[];
 }
 
 export default function RecommendedUnisSection({ unis }: RecommendedUnisSectionProps) {
@@ -97,31 +108,35 @@ export default function RecommendedUnisSection({ unis }: RecommendedUnisSectionP
                 justifyContent: "space-between",
               }}
             >
-              <span
-                style={{
-                  padding: "4px 10px",
-                  borderRadius: 8,
-                  background: "var(--color-green)",
-                  color: "#fff",
-                  fontSize: 12,
-                  fontWeight: 800,
-                }}
-              >
-                {u.match}% match
-              </span>
-              <span
-                style={{
-                  padding: "4px 10px",
-                  borderRadius: 8,
-                  background: "rgba(0,0,0,.45)",
-                  color: "#fff",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  backdropFilter: "blur(4px)",
-                }}
-              >
-                #{u.rank}
-              </span>
+              {u.match != null && (
+                <span
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: 8,
+                    background: "var(--color-green)",
+                    color: "#fff",
+                    fontSize: 12,
+                    fontWeight: 800,
+                  }}
+                >
+                  {u.match}% match
+                </span>
+              )}
+              {u.rank != null && (
+                <span
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: 8,
+                    background: "rgba(0,0,0,.45)",
+                    color: "#fff",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    backdropFilter: "blur(4px)",
+                  }}
+                >
+                  #{u.rank}
+                </span>
+              )}
             </div>
 
             {/* Card body */}
@@ -158,40 +173,44 @@ export default function RecommendedUnisSection({ unis }: RecommendedUnisSectionP
                   alignItems: "center",
                 }}
               >
-                <div>
-                  <div
+                {u.tuition && (
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 11.5,
+                        color: "var(--color-muted)",
+                        textTransform: "uppercase",
+                        letterSpacing: ".04em",
+                        marginBottom: 2,
+                      }}
+                    >
+                      Tuition / year
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 15,
+                        fontWeight: 800,
+                        color: "var(--color-navy)",
+                      }}
+                    >
+                      {u.tuition}
+                    </div>
+                  </div>
+                )}
+                {u.schShort && (
+                  <span
                     style={{
-                      fontSize: 11.5,
-                      color: "var(--color-muted)",
-                      textTransform: "uppercase",
-                      letterSpacing: ".04em",
-                      marginBottom: 2,
+                      padding: "5px 12px",
+                      borderRadius: 8,
+                      background: "var(--color-green-bg)",
+                      color: "var(--color-green)",
+                      fontSize: 12,
+                      fontWeight: 700,
                     }}
                   >
-                    Tuition / year
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 15,
-                      fontWeight: 800,
-                      color: "var(--color-navy)",
-                    }}
-                  >
-                    {u.tuition}
-                  </div>
-                </div>
-                <span
-                  style={{
-                    padding: "5px 12px",
-                    borderRadius: 8,
-                    background: "var(--color-green-bg)",
-                    color: "var(--color-green)",
-                    fontSize: 12,
-                    fontWeight: 700,
-                  }}
-                >
-                  {u.schShort}
-                </span>
+                    {u.schShort}
+                  </span>
+                )}
               </div>
             </div>
           </Link>

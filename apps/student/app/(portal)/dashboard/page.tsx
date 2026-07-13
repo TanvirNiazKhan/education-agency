@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "../../contexts/auth-context";
-import { getMyApplications } from "../../lib/api";
-import { UNIS, DOCS, NOTIFS } from "../../lib/data";
+import { getMyApplications, getStudentProfile } from "../../lib/api";
 
 /* ── Status config ───────────────────────────────────────────────── */
 
@@ -39,7 +38,72 @@ interface Application {
   commence_month?: string;
   commence_year?: string;
   submitted_at?: string;
+  documents?: {
+    id: string;
+    document_type: string;
+    file_name: string;
+    status: string;
+  }[];
 }
+
+interface StudentProfile {
+  gender?: string | null;
+  date_of_birth?: string | null;
+  nationality?: string | null;
+  passport_no?: string | null;
+  mobile?: string | null;
+  addresses?: { id: string; type: string }[];
+  emergency_contacts?: { id: string }[];
+  education?: { id: string }[];
+  work_experience?: { id: string }[];
+}
+
+/* ── Profile completion calculator ───────────────────────────────── */
+
+function computeProfileCompletion(profile: StudentProfile | null): number {
+  if (!profile) return 0;
+  const checks = [
+    !!profile.gender,
+    !!profile.date_of_birth,
+    !!profile.nationality,
+    !!profile.passport_no,
+    !!profile.mobile,
+    (profile.addresses?.length || 0) > 0,
+    (profile.emergency_contacts?.length || 0) > 0,
+    (profile.education?.length || 0) > 0,
+    (profile.work_experience?.length || 0) > 0,
+  ];
+  const filled = checks.filter(Boolean).length;
+  return Math.round((filled / checks.length) * 100);
+}
+
+/* ── Document type labels ────────────────────────────────────────── */
+
+const DOC_TYPE_CONFIG: Record<string, { ic: string; tint: string; color: string }> = {
+  passport:        { ic: "PP",  tint: "#eff4ff", color: "#2563eb" },
+  academic:        { ic: "TR",  tint: "#f4efff", color: "#7c3aed" },
+  english_test:    { ic: "EN",  tint: "#fff1e9", color: "#ea580c" },
+  sop:             { ic: "SOP", tint: "#e9f9ef", color: "#0f9d58" },
+  cv:              { ic: "CV",  tint: "#eef2ff", color: "#4f46e5" },
+  nid:             { ic: "NID", tint: "#fdf3e6", color: "#e08a1e" },
+  guardian_nid:    { ic: "GN",  tint: "#fef2f2", color: "#e0492e" },
+  course_outlines: { ic: "CO",  tint: "#eff4ff", color: "#2563eb" },
+  gap_explanation: { ic: "GE",  tint: "#f4efff", color: "#7c3aed" },
+  spouse_docs:     { ic: "SP",  tint: "#fff1e9", color: "#ea580c" },
+};
+
+const DOC_TYPE_LABELS: Record<string, string> = {
+  passport: "Passport",
+  academic: "Academic Documents",
+  english_test: "IELTS / PTE Score",
+  sop: "Statement of Purpose",
+  cv: "CV / Résumé",
+  nid: "National ID",
+  guardian_nid: "Guardian NID",
+  course_outlines: "Course Outlines",
+  gap_explanation: "Gap Explanation",
+  spouse_docs: "Spouse Documents",
+};
 
 /* ── Application progress card ───────────────────────────────────── */
 
@@ -227,24 +291,38 @@ function DraftBanner() {
 export default function DashboardPage() {
   const { token, user, isLoading: authLoading } = useAuth();
   const [applications, setApplications] = useState<Application[]>([]);
+  const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [appsLoading, setAppsLoading] = useState(true);
-
-  const RADIUS = 36;
-  const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
   useEffect(() => {
     if (authLoading || !token) { setAppsLoading(false); return; }
-    getMyApplications(token)
-      .then((apps: any) => setApplications(apps))
-      .catch(() => {})
-      .finally(() => setAppsLoading(false));
+
+    Promise.all([
+      getMyApplications(token).catch(() => []),
+      getStudentProfile(token).catch(() => null),
+    ]).then(([apps, prof]: [any, any]) => {
+      setApplications(apps || []);
+      setProfile(prof);
+      setAppsLoading(false);
+    });
   }, [token, authLoading]);
 
   const firstName = user?.first_name || "there";
   const hasApps = applications.length > 0;
+  const profilePct = computeProfileCompletion(profile);
 
-  // Profile completion estimate based on what's in user object
-  const profilePct = user ? 40 : 0; // Rough — improve when profile data available
+  // Collect unique documents from all applications
+  const allDocs = applications.flatMap((app) => app.documents || []);
+  const docsByType = new Map<string, { type: string; name: string; status: string }>();
+  for (const doc of allDocs) {
+    // Keep latest per type
+    docsByType.set(doc.document_type, {
+      type: doc.document_type,
+      name: doc.file_name,
+      status: doc.status || "uploaded",
+    });
+  }
+  const docEntries = [...docsByType.values()];
 
   return (
     <main className="px-4 py-6 pb-[120px] md:pb-16 lg:px-7 lg:py-8 lg:pb-[90px]" style={{ maxWidth: 1160, margin: "0 auto" }}>
@@ -322,10 +400,10 @@ export default function DashboardPage() {
               <circle cx={44} cy={44} r={RADIUS} fill="none" stroke="var(--color-line)" strokeWidth={7} />
               <circle
                 cx={44} cy={44} r={RADIUS} fill="none"
-                stroke={hasApps ? "var(--color-green)" : "var(--color-blue)"}
+                stroke={profilePct >= 80 ? "var(--color-green)" : "var(--color-blue)"}
                 strokeWidth={7} strokeLinecap="round"
                 strokeDasharray={CIRCUMFERENCE}
-                strokeDashoffset={CIRCUMFERENCE * (1 - (hasApps ? 0.6 : 0.25))}
+                strokeDashoffset={CIRCUMFERENCE * (1 - profilePct / 100)}
               />
             </svg>
             <span
@@ -339,7 +417,7 @@ export default function DashboardPage() {
                 color: "var(--color-navy)",
               }}
             >
-              {hasApps ? "60%" : "25%"}
+              {profilePct}%
             </span>
           </div>
           <div className="flex flex-col">
@@ -414,30 +492,6 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Saved universities */}
-          <div style={{ background: "var(--color-card)", borderRadius: 18, boxShadow: "var(--shadow-sm)", padding: "24px 26px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-              <span style={{ fontSize: 16, fontWeight: 800, color: "var(--color-ink)" }}>Saved universities</span>
-              <span style={{ fontSize: 13, color: "var(--color-muted)", fontWeight: 600 }}>3 saved</span>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {UNIS.slice(0, 3).map((u) => (
-                <Link href={`/university/${u.id}`} key={u.id} style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", padding: "10px 12px", borderRadius: 14, transition: "background .15s" }} className="spotrow">
-                  <div style={{ width: 44, height: 44, borderRadius: 12, background: u.img, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 15, fontWeight: 800, flexShrink: 0 }}>
-                    {u.name.charAt(0)}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14.5, fontWeight: 800, color: "var(--color-ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.name}</div>
-                    <div style={{ fontSize: 12.5, color: "var(--color-muted)" }}>{u.city}, {u.country} · Rank #{u.rank}</div>
-                  </div>
-                  <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--color-green)", background: "var(--color-green-bg)", padding: "4px 10px", borderRadius: 20, flexShrink: 0 }}>
-                    {u.match}%
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-
           {/* AI Rec */}
           <div style={{ background: "linear-gradient(135deg,#0a1330,#16224e)", borderRadius: 18, padding: "26px 28px", color: "#fff", position: "relative", overflow: "hidden" }}>
             <div style={{ position: "absolute", top: -40, right: -40, width: 160, height: 160, borderRadius: "50%", background: "radial-gradient(circle,rgba(37,99,235,.35),transparent 70%)", pointerEvents: "none" }} />
@@ -446,10 +500,10 @@ export default function DashboardPage() {
               <span style={{ fontSize: 15, fontWeight: 800 }}>AI recommendation</span>
             </div>
             <p style={{ fontSize: 14, lineHeight: 1.6, opacity: 0.88, margin: "0 0 18px" }}>
-              Based on your profile, Monash University is a strong under-the-radar match — 87% fit with a 25% merit scholarship you likely qualify for.
+              Complete your profile and submit an application to get personalized university recommendations from our AI counsellor.
             </p>
-            <Link href="/university/monash" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 700, color: "var(--color-navy)", background: "#fff", padding: "9px 18px", borderRadius: 10, textDecoration: "none" }} className="lift-hover">
-              See why it fits →
+            <Link href="/chat" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 700, color: "var(--color-navy)", background: "#fff", padding: "9px 18px", borderRadius: 10, textDecoration: "none" }} className="lift-hover">
+              Talk to AI counsellor →
             </Link>
           </div>
         </div>
@@ -460,35 +514,59 @@ export default function DashboardPage() {
           <div style={{ background: "var(--color-card)", borderRadius: 18, boxShadow: "var(--shadow-sm)", padding: "24px 22px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <span style={{ fontSize: 16, fontWeight: 800, color: "var(--color-ink)" }}>Document center</span>
-              <Link href="/documents" style={{ fontSize: 13, fontWeight: 600, color: "var(--color-blue)", textDecoration: "none" }}>Open →</Link>
+              {hasApps && (
+                <Link href="/documents" style={{ fontSize: 13, fontWeight: 600, color: "var(--color-blue)", textDecoration: "none" }}>Open →</Link>
+              )}
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {DOCS.map((d, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "6px 0" }}>
-                  <div style={{ width: 34, height: 34, borderRadius: 9, background: d.tint, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: d.color, flexShrink: 0 }}>{d.ic}</div>
-                  <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700, color: "var(--color-ink)" }}>{d.name}</span>
-                  <span style={{ fontSize: 11.5, fontWeight: 600, color: d.color, background: d.bg, padding: "3px 10px", borderRadius: 20, flexShrink: 0 }}>{d.status}</span>
-                </div>
-              ))}
-            </div>
+            {docEntries.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "20px 0", fontSize: 13.5, color: "var(--color-muted)" }}>
+                {hasApps ? "No documents uploaded yet." : "Submit an application to start uploading documents."}
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {docEntries.map((d) => {
+                  const cfg = DOC_TYPE_CONFIG[d.type] || { ic: d.type.slice(0, 2).toUpperCase(), tint: "#f1f3f8", color: "#8592ad" };
+                  const statusColor = d.status === "verified" ? "#0f9d58" : d.status === "rejected" ? "#e0492e" : "#2563eb";
+                  const statusBg = d.status === "verified" ? "#e9f9ef" : d.status === "rejected" ? "#fdecea" : "#eff4ff";
+                  const statusLabel = d.status.charAt(0).toUpperCase() + d.status.slice(1);
+                  return (
+                    <div key={d.type} style={{ display: "flex", alignItems: "center", gap: 12, padding: "6px 0" }}>
+                      <div style={{ width: 34, height: 34, borderRadius: 9, background: cfg.tint, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: cfg.color, flexShrink: 0 }}>{cfg.ic}</div>
+                      <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700, color: "var(--color-ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {DOC_TYPE_LABELS[d.type] || d.type}
+                      </span>
+                      <span style={{ fontSize: 11.5, fontWeight: 600, color: statusColor, background: statusBg, padding: "3px 10px", borderRadius: 20, flexShrink: 0 }}>{statusLabel}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {/* Notifications */}
-          <div style={{ background: "var(--color-card)", borderRadius: 18, boxShadow: "var(--shadow-sm)", padding: "24px 22px" }}>
-            <span style={{ fontSize: 16, fontWeight: 800, color: "var(--color-ink)", display: "block", marginBottom: 16 }}>Notifications</span>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {NOTIFS.map((n, i) => (
-                <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: n.dot, flexShrink: 0, marginTop: 6 }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--color-ink)" }}>{n.title}</div>
-                    <div style={{ fontSize: 12.5, color: "var(--color-muted)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{n.sub}</div>
-                  </div>
-                  <span style={{ fontSize: 11, color: "var(--color-muted)", flexShrink: 0, marginTop: 2 }}>{n.when}</span>
-                </div>
-              ))}
+          {/* Application summary */}
+          {hasApps && (
+            <div style={{ background: "var(--color-card)", borderRadius: 18, boxShadow: "var(--shadow-sm)", padding: "24px 22px" }}>
+              <span style={{ fontSize: 16, fontWeight: 800, color: "var(--color-ink)", display: "block", marginBottom: 16 }}>Application summary</span>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {applications.map((app) => {
+                  const cfg = STATUS_CONFIG[app.status] || STATUS_CONFIG.submitted;
+                  return (
+                    <div key={app.id} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: cfg.color, flexShrink: 0, marginTop: 6 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--color-ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {app.university?.name || "University"}
+                        </div>
+                        <div style={{ fontSize: 12.5, color: "var(--color-muted)", marginTop: 2 }}>
+                          {app.course?.name || "Course"} · {cfg.label}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </main>

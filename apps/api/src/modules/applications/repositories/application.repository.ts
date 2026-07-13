@@ -90,6 +90,64 @@ export class ApplicationRepository {
     });
   }
 
+  async getDashboardStats() {
+    const qb = this.applications.createQueryBuilder('app')
+      .leftJoinAndSelect('app.university', 'uni')
+      .leftJoinAndSelect('uni.country', 'country');
+
+    const apps = await qb.getMany();
+
+    const totalStudents = new Set(apps.map((a) => a.student_id)).size;
+    const totalApplications = apps.length;
+
+    const statusCounts: Record<string, number> = {};
+    for (const a of apps) {
+      statusCounts[a.status] = (statusCounts[a.status] || 0) + 1;
+    }
+
+    // Applications by country
+    const countryMap = new Map<string, number>();
+    for (const a of apps) {
+      const name = a.university?.country?.name || 'Unknown';
+      countryMap.set(name, (countryMap.get(name) || 0) + 1);
+    }
+    const countryBreakdown = [...countryMap.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+
+    // Applications by university
+    const uniMap = new Map<string, { name: string; shortName: string | null; count: number }>();
+    for (const a of apps) {
+      const id = a.university_id;
+      if (!uniMap.has(id)) {
+        uniMap.set(id, { name: a.university?.name || 'Unknown', shortName: a.university?.short_name || null, count: 0 });
+      }
+      uniMap.get(id)!.count++;
+    }
+    const universityBreakdown = [...uniMap.values()]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    // Applications by intake month
+    const intakeMap = new Map<string, number>();
+    for (const a of apps) {
+      const key = a.commence_month || 'Unknown';
+      intakeMap.set(key, (intakeMap.get(key) || 0) + 1);
+    }
+    const intakeBreakdown = [...intakeMap.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+
+    return {
+      totalStudents,
+      totalApplications,
+      statusCounts,
+      countryBreakdown,
+      universityBreakdown,
+      intakeBreakdown,
+    };
+  }
+
   async create(data: Partial<Application>): Promise<Application> {
     const entity = this.applications.create({
       ...data,

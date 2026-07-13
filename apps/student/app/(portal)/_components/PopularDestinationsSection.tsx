@@ -1,8 +1,15 @@
 import Link from "next/link";
-import type { Destination } from "../../lib/data";
+
+interface DestinationCard {
+  id: string;
+  name: string;
+  img: string;
+  unis?: number | string;
+  courses?: number | string;
+}
 
 interface PopularDestinationsSectionProps {
-  destinations: Destination[];
+  destinations: DestinationCard[];
 }
 
 export default function PopularDestinationsSection({ destinations }: PopularDestinationsSectionProps) {
@@ -62,7 +69,9 @@ export default function PopularDestinationsSection({ destinations }: PopularDest
                   marginTop: 2,
                 }}
               >
-                {d.unis} universities &middot; {d.courses} courses
+                {d.unis != null && <>{d.unis} universities</>}
+                {d.unis != null && d.courses != null && <> &middot; </>}
+                {d.courses != null && <>{d.courses} courses</>}
               </div>
             </div>
           </Link>

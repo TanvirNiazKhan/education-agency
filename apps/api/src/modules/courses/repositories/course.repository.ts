@@ -16,7 +16,7 @@ export class CourseRepository {
         ...(!includeInactive && { is_active: true }),
         ...(search && { name: ILike(`%${search}%`) }),
       },
-      relations: { faculty: true, degree: true },
+      relations: { faculty: { university: { country: true, city: true } }, degree: true },
     });
   }
 

@@ -32,6 +32,11 @@ export class AdminApplicationsController {
     private readonly documentRepo: Repository<ApplicationDocument>,
   ) {}
 
+  @Get('dashboard/stats')
+  async getDashboardStats() {
+    return this.applicationsService.getDashboardStats();
+  }
+
   @Get()
   async getAllApplications() {
     return this.applicationsService.getAllApplications();

@@ -478,6 +478,19 @@ export const applicationsApi = {
     api.patch<AdminApplication>(`/admin/applications/${id}/status`, { status, comment }),
 };
 
+export interface DashboardStats {
+  totalStudents: number;
+  totalApplications: number;
+  statusCounts: Record<string, number>;
+  countryBreakdown: { name: string; count: number }[];
+  universityBreakdown: { name: string; shortName: string | null; count: number }[];
+  intakeBreakdown: { name: string; count: number }[];
+}
+
+export const dashboardApi = {
+  stats: () => api.get<DashboardStats>('/admin/applications/dashboard/stats'),
+};
+
 export const universityImagesApi = {
   list: (universityId: string) =>
     api.get<UniversityImage[]>(`/university-images?university_id=${universityId}`),

@@ -236,6 +236,63 @@ export async function changePassword(
   return handleResponse(res);
 }
 
+// ─── Public Data (no auth) ───────────────────────────────────────────────────
+
+export interface ApiUniversity {
+  id: string;
+  name: string;
+  short_name: string | null;
+  slug: string;
+  logo: string | null;
+  banner: string | null;
+  description: string | null;
+  featured: boolean;
+  country?: { id: string; name: string; iso_code: string };
+  city?: { id: string; name: string };
+}
+
+export interface ApiCourse {
+  id: string;
+  name: string;
+  course_code: string;
+  tuition_fee: number;
+  currency: string;
+  duration_months: number;
+  intake: string | null;
+  faculty?: {
+    id: string;
+    name: string;
+    university?: { id: string; name: string; country?: { name: string }; city?: { name: string } };
+  };
+  degree?: { id: string; name: string };
+}
+
+export interface ApiCountry {
+  id: string;
+  name: string;
+  iso_code: string;
+}
+
+export async function getUniversities(featured?: boolean): Promise<ApiUniversity[]> {
+  const params = new URLSearchParams();
+  if (featured) params.set("featured", "true");
+  const qs = params.toString();
+  const res = await fetch(`${API_BASE}/universities${qs ? `?${qs}` : ""}`);
+  return handleResponse(res);
+}
+
+export async function getCourses(): Promise<ApiCourse[]> {
+  const res = await fetch(`${API_BASE}/courses`);
+  return handleResponse(res);
+}
+
+export async function getCountries(): Promise<ApiCountry[]> {
+  const res = await fetch(`${API_BASE}/countries`);
+  return handleResponse(res);
+}
+
+// ─── User ────────────────────────────────────────────────────────────────────
+
 export async function updateProfile(
   token: string,
   data: { first_name?: string; last_name?: string; phone?: string },

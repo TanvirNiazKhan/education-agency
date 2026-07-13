@@ -1,8 +1,20 @@
 import Link from "next/link";
-import type { Course } from "../../lib/data";
+
+interface CourseCard {
+  id: string;
+  title: string;
+  uni: string;
+  level: string;
+  duration: string;
+  tuition: string;
+  intake: string;
+  abbr: string;
+  tint: string;
+  icColor: string;
+}
 
 interface PopularCoursesSectionProps {
-  courses: Course[];
+  courses: CourseCard[];
 }
 
 export default function PopularCoursesSection({ courses }: PopularCoursesSectionProps) {

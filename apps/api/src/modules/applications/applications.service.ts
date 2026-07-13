@@ -108,6 +108,10 @@ export class ApplicationsService {
     );
   }
 
+  async getDashboardStats() {
+    return this.applicationRepository.getDashboardStats();
+  }
+
   async getAllApplications() {
     return this.applicationRepository.findAll();
   }
