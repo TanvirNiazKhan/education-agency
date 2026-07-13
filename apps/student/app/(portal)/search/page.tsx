@@ -345,7 +345,7 @@ export default function SearchPage() {
                       display: "flex", alignItems: "center", justifyContent: "space-between",
                       padding: "10px 14px", borderRadius: 11,
                       border: sel ? "1.5px solid var(--color-blue)" : "1.5px solid var(--color-line)",
-                      background: sel ? "var(--color-blue-x)" : "#fff",
+                      background: sel ? "var(--color-blue-x)" : "var(--color-card)",
                       cursor: "pointer", fontSize: 13.5, fontWeight: 700,
                       color: sel ? "var(--color-blue)" : "var(--color-ink)",
                       textAlign: "left", width: "100%",
@@ -378,7 +378,7 @@ export default function SearchPage() {
                   onChange={(e) => setCitySearch(e.target.value)}
                   style={{
                     width: "100%", fontSize: 13, padding: "8px 12px", borderRadius: 10,
-                    border: "1.5px solid var(--color-line)", background: "#fff",
+                    border: "1.5px solid var(--color-line)", background: "var(--color-card)",
                     color: "var(--color-ink)", marginBottom: 10, outline: "none",
                   }}
                 />
@@ -475,7 +475,7 @@ export default function SearchPage() {
                   onChange={(e) => setFacultySearch(e.target.value)}
                   style={{
                     width: "100%", fontSize: 13, padding: "8px 12px", borderRadius: 10,
-                    border: "1.5px solid var(--color-line)", background: "#fff",
+                    border: "1.5px solid var(--color-line)", background: "var(--color-card)",
                     color: "var(--color-ink)", marginBottom: 10, outline: "none",
                   }}
                 />
@@ -528,7 +528,7 @@ export default function SearchPage() {
                 style={{
                   fontSize: 13.5, fontWeight: 700, padding: "8px 20px", borderRadius: 10,
                   border: "none", cursor: "pointer",
-                  background: viewTab === tab ? "#fff" : "transparent",
+                  background: viewTab === tab ? "var(--color-card)" : "transparent",
                   color: viewTab === tab ? "var(--color-blue)" : "var(--color-sub)",
                   boxShadow: viewTab === tab ? "var(--shadow-sm)" : "none",
                   textTransform: "capitalize",
@@ -553,7 +553,7 @@ export default function SearchPage() {
               style={{
                 fontSize: 13, fontWeight: 600, color: "var(--color-sub)",
                 border: "1.5px solid var(--color-line)", borderRadius: 10,
-                padding: "8px 14px", background: "#fff", cursor: "pointer",
+                padding: "8px 14px", background: "var(--color-card)", cursor: "pointer",
               }}
             >
               <option value="name">Sort by: Name</option>
@@ -739,7 +739,7 @@ export default function SearchPage() {
               href="/chat"
               style={{
                 display: "inline-flex", alignItems: "center", gap: 6,
-                fontSize: 13.5, fontWeight: 700, color: "var(--color-navy)",
+                fontSize: 13.5, fontWeight: 700, color: "#0a1330",
                 background: "#fff", padding: "9px 18px", borderRadius: 10, textDecoration: "none",
               }}
               className="lift-hover"

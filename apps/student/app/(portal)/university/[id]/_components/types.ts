@@ -107,8 +107,8 @@ export interface CourseWithFaculty extends ApiCourse {
 }
 
 export const COURSE_TINTS = [
-  { tint: "rgba(37,99,235,.10)", color: "#2563eb" },
-  { tint: "rgba(15,157,88,.10)", color: "#0f9d58" },
+  { tint: "rgba(37,99,235,.10)", color: "var(--color-blue)" },
+  { tint: "rgba(15,157,88,.10)", color: "var(--color-green)" },
   { tint: "rgba(234,88,12,.10)", color: "#ea580c" },
   { tint: "rgba(139,92,246,.10)", color: "#8b5cf6" },
   { tint: "rgba(236,72,153,.10)", color: "#ec4899" },

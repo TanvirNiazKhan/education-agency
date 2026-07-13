@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useAuth } from "../../contexts/auth-context";
 
 const ROTATING_WORDS = ["abroad", "in Australia", "in Canada", "in the UK"];
 
@@ -12,6 +13,7 @@ interface HeroSectionProps {
 
 export default function HeroSection({ suggestChips, children }: HeroSectionProps) {
   const [wordIdx, setWordIdx] = useState(0);
+  const { user } = useAuth();
 
   useEffect(() => {
     const t = setInterval(
@@ -29,7 +31,7 @@ export default function HeroSection({ suggestChips, children }: HeroSectionProps
         position: "relative",
         overflow: "hidden",
         background:
-          "radial-gradient(120% 130% at 50% -20%,#eef3ff 0%,#f6f7fa 55%)",
+          "radial-gradient(120% 130% at 50% -20%,var(--color-blue-x) 0%,var(--color-bg) 55%)",
       }}
     >
       {/* Orbs */}
@@ -94,7 +96,7 @@ export default function HeroSection({ suggestChips, children }: HeroSectionProps
             alignItems: "center",
             gap: 10,
             padding: "6px 6px 6px 14px",
-            background: "#fff",
+            background: "var(--color-card)",
             border: "1px solid var(--color-line)",
             borderRadius: 100,
             fontSize: 13.5,
@@ -113,7 +115,7 @@ export default function HeroSection({ suggestChips, children }: HeroSectionProps
               display: "inline-block",
             }}
           />
-          Welcome back, Ayaan
+          {user ? `Welcome back, ${user.first_name}` : "Welcome"}
           <span
             style={{
               display: "inline-flex",
@@ -187,7 +189,7 @@ export default function HeroSection({ suggestChips, children }: HeroSectionProps
               alignItems: "center",
               gap: 14,
               padding: "0 10px 0 22px",
-              background: "#fff",
+              background: "var(--color-card)",
               border: "1px solid var(--color-line)",
               borderRadius: 18,
               boxShadow: "var(--shadow-lg)",
@@ -273,7 +275,7 @@ export default function HeroSection({ suggestChips, children }: HeroSectionProps
                 alignItems: "center",
                 gap: 7,
                 padding: "7px 14px",
-                background: "#fff",
+                background: "var(--color-card)",
                 border: "1px solid var(--color-line)",
                 borderRadius: 100,
                 fontSize: 13.5,
@@ -297,7 +299,7 @@ export default function HeroSection({ suggestChips, children }: HeroSectionProps
             margin: "26px auto 0",
             gap: 16,
             padding: "14px 18px",
-            background: "#fff",
+            background: "var(--color-card)",
             border: "1px solid var(--color-line)",
             borderRadius: 16,
             boxShadow: "var(--shadow-sm)",

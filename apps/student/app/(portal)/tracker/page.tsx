@@ -55,15 +55,15 @@ const PIPELINE = [
 ];
 
 const STATUS_LABEL: Record<string, { label: string; color: string; bg: string }> = {
-  submitted:           { label: "Submitted",          color: "#2563eb", bg: "#eff4ff" },
-  under_review:        { label: "Under Review",        color: "#e08a1e", bg: "#fdf3e6" },
-  documents_requested: { label: "Docs Requested",      color: "#e0492e", bg: "#fef2f2" },
-  conditional_offer:   { label: "Conditional Offer",   color: "#0f9d58", bg: "#e9f9ef" },
-  unconditional_offer: { label: "Unconditional Offer", color: "#0f9d58", bg: "#e9f9ef" },
-  accepted:            { label: "Accepted",            color: "#0f9d58", bg: "#e9f9ef" },
-  enrolled:            { label: "Enrolled",            color: "#0f9d58", bg: "#e9f9ef" },
-  rejected:            { label: "Rejected",            color: "#e0492e", bg: "#fef2f2" },
-  withdrawn:           { label: "Withdrawn",           color: "#8592ad", bg: "#f1f3f8" },
+  submitted:           { label: "Submitted",          color: "var(--color-blue)", bg: "var(--color-blue-x)" },
+  under_review:        { label: "Under Review",        color: "var(--color-amber)", bg: "var(--color-amber-bg)" },
+  documents_requested: { label: "Docs Requested",      color: "var(--color-red)", bg: "var(--danger-bg-hover)" },
+  conditional_offer:   { label: "Conditional Offer",   color: "var(--color-green)", bg: "var(--color-green-bg)" },
+  unconditional_offer: { label: "Unconditional Offer", color: "var(--color-green)", bg: "var(--color-green-bg)" },
+  accepted:            { label: "Accepted",            color: "var(--color-green)", bg: "var(--color-green-bg)" },
+  enrolled:            { label: "Enrolled",            color: "var(--color-green)", bg: "var(--color-green-bg)" },
+  rejected:            { label: "Rejected",            color: "var(--color-red)", bg: "var(--danger-bg-hover)" },
+  withdrawn:           { label: "Withdrawn",           color: "var(--color-muted)", bg: "var(--color-line-2)" },
 };
 
 interface Application {
@@ -154,9 +154,9 @@ function TrackerTimeline({ app }: { app: Application }) {
         <div
           style={{
             padding: "20px 24px",
-            background: "#fef2f2",
+            background: "var(--danger-bg-hover)",
             borderBottom: "1px solid #fecaca",
-            color: "#e0492e",
+            color: "var(--color-red)",
             fontSize: 14,
             fontWeight: 600,
           }}
@@ -199,7 +199,7 @@ function TrackerTimeline({ app }: { app: Application }) {
                         : isCurrent
                           ? { background: "var(--color-blue)" }
                           : {
-                              background: "#fff",
+                              background: "var(--color-card)",
                               border: "2.5px solid var(--color-line)",
                             }),
                     }}
@@ -436,7 +436,7 @@ export default function TrackerPage() {
           style={{
             padding: "14px 18px",
             borderRadius: 12,
-            background: "#fef2f2",
+            background: "var(--danger-bg-hover)",
             border: "1px solid #fecaca",
             color: "var(--color-red)",
             fontSize: 14,

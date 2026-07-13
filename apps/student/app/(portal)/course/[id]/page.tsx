@@ -241,8 +241,8 @@ export default function CourseDetailPage() {
               <h2 style={{ fontSize: 18, fontWeight: 800, color: "var(--color-navy)", margin: "0 0 14px" }}>Entry requirements</h2>
               <div className="grid grid-cols-3 gap-2.5 md:gap-3.5">
                 {[
-                  { test: "IELTS", score: course.ielts_requirement, tint: "#eff4ff", color: "#2563eb" },
-                  { test: "PTE", score: course.pte_requirement, tint: "#e9f9ef", color: "#0f9d58" },
+                  { test: "IELTS", score: course.ielts_requirement, tint: "var(--color-blue-x)", color: "var(--color-blue)" },
+                  { test: "PTE", score: course.pte_requirement, tint: "var(--color-green-bg)", color: "var(--color-green)" },
                   { test: "TOEFL", score: course.toefl_requirement, tint: "#fff1e9", color: "#ea580c" },
                 ].map((t) => (
                   <div key={t.test} style={{ background: "var(--color-card)", borderRadius: 14, padding: "20px 16px", border: "1px solid var(--color-line)", textAlign: "center" }}>
@@ -264,8 +264,8 @@ export default function CourseDetailPage() {
                 <h2 style={{ fontSize: 18, fontWeight: 800, color: "var(--color-navy)", margin: "0 0 14px" }}>Band-wise requirements</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {[
-                    { test: "IELTS", prefix: "ielts", color: "#2563eb", bg: "#eff4ff" },
-                    { test: "PTE", prefix: "pte", color: "#0f9d58", bg: "#e9f9ef" },
+                    { test: "IELTS", prefix: "ielts", color: "var(--color-blue)", bg: "var(--color-blue-x)" },
+                    { test: "PTE", prefix: "pte", color: "var(--color-green)", bg: "var(--color-green-bg)" },
                     { test: "TOEFL", prefix: "toefl", color: "#ea580c", bg: "#fff1e9" },
                   ].map((t) => {
                     const hasBands = bandFields.some((b) => course[`${t.prefix}_${b}` as keyof ApiCourse]);

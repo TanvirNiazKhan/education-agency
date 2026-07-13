@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
-@theme inline {
+/* NOTE: plain @theme (not "inline") so Tailwind utilities reference
+   var(--color-*) at runtime — required for .dark overrides to work. */
+@theme {
   --color-blue: #2563eb;
   --color-blue-d: #1d4ed8;
   --color-blue-x: #eff4ff;
@@ -27,6 +29,43 @@
   --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
+:root {
+  --header-bg: rgba(255,255,255,.82);
+  --danger-bg-hover: #fef2f2;
+  --scrollbar-thumb: #d6dbe6;
+}
+
+.dark {
+  --color-blue: #3b82f6;
+  --color-blue-d: #60a5fa;
+  --color-blue-x: #1c2a4a;
+  --color-blue-2: #1e3a8a;
+  --color-navy: #e2e8f4;
+  --color-ink: #e4e6eb;
+  --color-sub: #a3adc2;
+  --color-muted: #6b7590;
+  --color-line: #262a36;
+  --color-line-2: #1e222d;
+  --color-bg: #0f1117;
+  --color-card: #171a22;
+  --color-green: #22c55e;
+  --color-green-2: #4ade80;
+  --color-green-bg: #132a1d;
+  --color-amber: #f0a43c;
+  --color-amber-bg: #2c2213;
+  --color-red: #f87171;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+  --shadow-md: 0 6px 24px -8px rgba(0,0,0,.5), 0 2px 6px -2px rgba(0,0,0,.35);
+  --shadow-lg: 0 24px 60px -16px rgba(0,0,0,.65), 0 8px 24px -12px rgba(0,0,0,.4);
+
+  --header-bg: rgba(15,17,23,.82);
+  --danger-bg-hover: #2a1618;
+  --scrollbar-thumb: #333846;
+
+  color-scheme: dark;
+}
+
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 
@@ -42,7 +81,7 @@ body {
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb {
-  background: #d6dbe6;
+  background: var(--scrollbar-thumb);
   border-radius: 20px;
   border: 3px solid var(--color-bg);
 }

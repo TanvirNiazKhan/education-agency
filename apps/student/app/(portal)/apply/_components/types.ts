@@ -16,13 +16,13 @@ export const INITIAL_FORM = {
   enrolType: "Full-time",
   travelPref: "",
 
-  firstName: "Ayaan",
-  lastName: "Rahman",
-  gender: "Male",
-  dob: "2003-05-14",
+  firstName: "",
+  lastName: "",
+  gender: "",
+  dob: "",
   maritalStatus: "Single",
-  email: "ayaan.rahman@email.com",
-  mobile: "+880 1712 345678",
+  email: "",
+  mobile: "",
   homePhone: "",
   skype: "",
 
@@ -50,7 +50,7 @@ export const INITIAL_FORM = {
 
   emRelationship: "Parent",
   emFirstName: "",
-  emLastName: "Rahman",
+  emLastName: "",
   emMobile: "",
   emOtherPhone: "",
   emEmail: "",
@@ -88,7 +88,7 @@ export const INPUT_STYLE: React.CSSProperties = {
   fontSize: 14,
   fontWeight: 600,
   color: "var(--color-ink)",
-  background: "#fbfcfe",
+  background: "var(--color-line-2)",
   boxSizing: "border-box",
 };
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { CHAT_TOPICS } from "../../lib/data";
+import { useAuth } from "../../contexts/auth-context";
 
 const recentChats = [
   { label: "Scholarships for CS", time: "2h ago" },
@@ -16,6 +17,7 @@ const starterPrompts = [
 ];
 
 export default function ChatPage() {
+  const { user } = useAuth();
   return (
     <div
       style={{
@@ -297,7 +299,7 @@ export default function ChatPage() {
                 marginTop: 1,
               }}
             >
-              Personalised to Ayaan &middot; CS &middot; 3.2 CGPA
+              {user ? `Personalised to ${user.first_name}` : "Personalised to you"}
             </div>
           </div>
           <Link
@@ -371,7 +373,7 @@ export default function ChatPage() {
                   margin: 0,
                 }}
               >
-                Hi Ayaan 👋 I&apos;m your AI admission counsellor. Tell me about
+                Hi{user ? ` ${user.first_name}` : ""} 👋 I&apos;m your AI admission counsellor. Tell me about
                 yourself — your CGPA, budget, or where you&apos;d like to study —
                 and I&apos;ll build a shortlist for you.
               </p>

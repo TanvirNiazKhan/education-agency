@@ -84,7 +84,7 @@ export default function SettingsPage() {
       {/* ── Profile Photo ── */}
       <div
         style={{
-          background: "#fff",
+          background: "var(--color-card)",
           border: "1px solid var(--color-line)",
           borderRadius: 16,
           padding: "24px",
@@ -162,7 +162,7 @@ export default function SettingsPage() {
               <div style={{ fontSize: 12, color: "var(--color-red)", marginTop: 6 }}>{avatarError}</div>
             )}
             {avatarSuccess && (
-              <div style={{ fontSize: 12, color: "#15803d", marginTop: 6 }}>Photo updated.</div>
+              <div style={{ fontSize: 12, color: "var(--color-green)", marginTop: 6 }}>Photo updated.</div>
             )}
             <div style={{ fontSize: 11.5, color: "var(--color-muted)", marginTop: 6 }}>
               JPEG, PNG or WebP · max 5 MB
@@ -174,7 +174,7 @@ export default function SettingsPage() {
       {/* ── Change Password ── */}
       <div
         style={{
-          background: "#fff",
+          background: "var(--color-card)",
           border: "1px solid var(--color-line)",
           borderRadius: 16,
           padding: "24px",
@@ -217,9 +217,9 @@ export default function SettingsPage() {
               style={{
                 padding: "10px 14px",
                 borderRadius: 10,
-                background: "#fef2f2",
+                background: "var(--danger-bg-hover)",
                 border: "1px solid #fecaca",
-                color: "#dc2626",
+                color: "var(--color-red)",
                 fontSize: 13,
                 fontWeight: 600,
               }}
@@ -233,9 +233,9 @@ export default function SettingsPage() {
               style={{
                 padding: "10px 14px",
                 borderRadius: 10,
-                background: "#f0fdf4",
-                border: "1px solid #bbf7d0",
-                color: "#15803d",
+                background: "var(--color-green-bg)",
+                border: "1px solid var(--color-green-2)",
+                color: "var(--color-green)",
                 fontSize: 13,
                 fontWeight: 600,
               }}

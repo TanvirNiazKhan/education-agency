@@ -74,7 +74,7 @@ export default function Spotlight({ open, onClose }: SpotlightProps) {
           items.push({
             category: "Courses",
             icon: "📘",
-            tint: "#eff4ff",
+            tint: "var(--color-blue-x)",
             title: c.name,
             subtitle: `${c.faculty?.name || ""} · ${c.degree?.name || ""}`,
             kind: "Course",
@@ -164,7 +164,7 @@ export default function Spotlight({ open, onClose }: SpotlightProps) {
         className="w-full md:w-[640px] rounded-[10px] md:rounded-[20px]"
         style={{
           maxWidth: "calc(100% - 16px)",
-          background: "#fff",
+          background: "var(--color-card)",
           border: "1px solid var(--color-line)",
           boxShadow: "var(--shadow-lg)",
           overflow: "hidden",

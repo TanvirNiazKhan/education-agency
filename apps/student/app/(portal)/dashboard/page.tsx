@@ -8,15 +8,15 @@ import { getMyApplications, getStudentProfile } from "../../lib/api";
 /* ── Status config ───────────────────────────────────────────────── */
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; step: number }> = {
-  submitted:           { label: "Submitted",          color: "#2563eb", bg: "#eff4ff",  step: 0 },
-  under_review:        { label: "Under Review",        color: "#e08a1e", bg: "#fdf3e6",  step: 2 },
-  documents_requested: { label: "Docs Requested",      color: "#e0492e", bg: "#fef2f2",  step: 1 },
-  conditional_offer:   { label: "Conditional Offer",   color: "#0f9d58", bg: "#e9f9ef",  step: 5 },
-  unconditional_offer: { label: "Unconditional Offer", color: "#0f9d58", bg: "#e9f9ef",  step: 6 },
-  accepted:            { label: "Accepted",            color: "#0f9d58", bg: "#e9f9ef",  step: 6 },
-  enrolled:            { label: "Enrolled",            color: "#0f9d58", bg: "#e9f9ef",  step: 7 },
-  rejected:            { label: "Rejected",            color: "#e0492e", bg: "#fef2f2",  step: -1 },
-  withdrawn:           { label: "Withdrawn",           color: "#8592ad", bg: "#f1f3f8",  step: -1 },
+  submitted:           { label: "Submitted",          color: "var(--color-blue)", bg: "var(--color-blue-x)",  step: 0 },
+  under_review:        { label: "Under Review",        color: "var(--color-amber)", bg: "var(--color-amber-bg)",  step: 2 },
+  documents_requested: { label: "Docs Requested",      color: "var(--color-red)", bg: "var(--danger-bg-hover)",  step: 1 },
+  conditional_offer:   { label: "Conditional Offer",   color: "var(--color-green)", bg: "var(--color-green-bg)",  step: 5 },
+  unconditional_offer: { label: "Unconditional Offer", color: "var(--color-green)", bg: "var(--color-green-bg)",  step: 6 },
+  accepted:            { label: "Accepted",            color: "var(--color-green)", bg: "var(--color-green-bg)",  step: 6 },
+  enrolled:            { label: "Enrolled",            color: "var(--color-green)", bg: "var(--color-green-bg)",  step: 7 },
+  rejected:            { label: "Rejected",            color: "var(--color-red)", bg: "var(--danger-bg-hover)",  step: -1 },
+  withdrawn:           { label: "Withdrawn",           color: "var(--color-muted)", bg: "var(--color-line-2)",  step: -1 },
 };
 
 const PIPELINE_LABELS = [
@@ -80,14 +80,14 @@ function computeProfileCompletion(profile: StudentProfile | null): number {
 /* ── Document type labels ────────────────────────────────────────── */
 
 const DOC_TYPE_CONFIG: Record<string, { ic: string; tint: string; color: string }> = {
-  passport:        { ic: "PP",  tint: "#eff4ff", color: "#2563eb" },
+  passport:        { ic: "PP",  tint: "var(--color-blue-x)", color: "var(--color-blue)" },
   academic:        { ic: "TR",  tint: "#f4efff", color: "#7c3aed" },
   english_test:    { ic: "EN",  tint: "#fff1e9", color: "#ea580c" },
-  sop:             { ic: "SOP", tint: "#e9f9ef", color: "#0f9d58" },
+  sop:             { ic: "SOP", tint: "var(--color-green-bg)", color: "var(--color-green)" },
   cv:              { ic: "CV",  tint: "#eef2ff", color: "#4f46e5" },
-  nid:             { ic: "NID", tint: "#fdf3e6", color: "#e08a1e" },
-  guardian_nid:    { ic: "GN",  tint: "#fef2f2", color: "#e0492e" },
-  course_outlines: { ic: "CO",  tint: "#eff4ff", color: "#2563eb" },
+  nid:             { ic: "NID", tint: "var(--color-amber-bg)", color: "var(--color-amber)" },
+  guardian_nid:    { ic: "GN",  tint: "var(--danger-bg-hover)", color: "var(--color-red)" },
+  course_outlines: { ic: "CO",  tint: "var(--color-blue-x)", color: "var(--color-blue)" },
   gap_explanation: { ic: "GE",  tint: "#f4efff", color: "#7c3aed" },
   spouse_docs:     { ic: "SP",  tint: "#fff1e9", color: "#ea580c" },
 };
@@ -123,7 +123,7 @@ function AppProgressCard({ app }: { app: Application }) {
           padding: "16px 18px",
           borderRadius: 14,
           border: "1.5px solid var(--color-line)",
-          background: "#fff",
+          background: "var(--color-card)",
           transition: "box-shadow .15s",
         }}
         className="card-hover"
@@ -502,7 +502,7 @@ export default function DashboardPage() {
             <p style={{ fontSize: 14, lineHeight: 1.6, opacity: 0.88, margin: "0 0 18px" }}>
               Complete your profile and submit an application to get personalized university recommendations from our AI counsellor.
             </p>
-            <Link href="/chat" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 700, color: "var(--color-navy)", background: "#fff", padding: "9px 18px", borderRadius: 10, textDecoration: "none" }} className="lift-hover">
+            <Link href="/chat" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 700, color: "#0a1330", background: "#fff", padding: "9px 18px", borderRadius: 10, textDecoration: "none" }} className="lift-hover">
               Talk to AI counsellor →
             </Link>
           </div>
@@ -525,9 +525,9 @@ export default function DashboardPage() {
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {docEntries.map((d) => {
-                  const cfg = DOC_TYPE_CONFIG[d.type] || { ic: d.type.slice(0, 2).toUpperCase(), tint: "#f1f3f8", color: "#8592ad" };
-                  const statusColor = d.status === "verified" ? "#0f9d58" : d.status === "rejected" ? "#e0492e" : "#2563eb";
-                  const statusBg = d.status === "verified" ? "#e9f9ef" : d.status === "rejected" ? "#fdecea" : "#eff4ff";
+                  const cfg = DOC_TYPE_CONFIG[d.type] || { ic: d.type.slice(0, 2).toUpperCase(), tint: "var(--color-line-2)", color: "var(--color-muted)" };
+                  const statusColor = d.status === "verified" ? "var(--color-green)" : d.status === "rejected" ? "var(--color-red)" : "var(--color-blue)";
+                  const statusBg = d.status === "verified" ? "var(--color-green-bg)" : d.status === "rejected" ? "var(--danger-bg-hover)" : "var(--color-blue-x)";
                   const statusLabel = d.status.charAt(0).toUpperCase() + d.status.slice(1);
                   return (
                     <div key={d.type} style={{ display: "flex", alignItems: "center", gap: 12, padding: "6px 0" }}>

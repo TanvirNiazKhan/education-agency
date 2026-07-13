@@ -28,9 +28,9 @@ export default function ChatFab() {
           fill="#fff"
           fillOpacity=".95"
         />
-        <circle cx="9.5" cy="12" r="1.5" fill="#2563eb" />
-        <circle cx="14" cy="12" r="1.5" fill="#2563eb" />
-        <circle cx="18.5" cy="12" r="1.5" fill="#2563eb" />
+        <circle cx="9.5" cy="12" r="1.5" fill="var(--color-blue)" />
+        <circle cx="14" cy="12" r="1.5" fill="var(--color-blue)" />
+        <circle cx="18.5" cy="12" r="1.5" fill="var(--color-blue)" />
       </svg>
     </Link>
   );

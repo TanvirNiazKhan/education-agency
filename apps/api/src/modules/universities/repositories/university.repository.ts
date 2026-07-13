@@ -16,14 +16,14 @@ export class UniversityRepository {
         ...(!includeInactive && { is_active: true }),
         ...(search && { name: ILike(`%${search}%`) }),
       },
-      relations: { country: true, city: true },
+      relations: { country: true, city: true, images: true },
     });
   }
 
   async findFeatured(): Promise<University[]> {
     return this.repository.find({
       where: { featured: true, is_active: true },
-      relations: { country: true, city: true },
+      relations: { country: true, city: true, images: true },
     });
   }
 

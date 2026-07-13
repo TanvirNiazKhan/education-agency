@@ -27,7 +27,7 @@ export default function IntakesScholarshipsSection({ intakes, scholarships }: In
         </h2>
         <div
           style={{
-            background: "#fff",
+            background: "var(--color-card)",
             borderRadius: 18,
             border: "1px solid var(--color-line)",
             overflow: "hidden",
@@ -139,7 +139,7 @@ export default function IntakesScholarshipsSection({ intakes, scholarships }: In
             <div
               key={s.name}
               style={{
-                background: "#fff",
+                background: "var(--color-card)",
                 borderRadius: 16,
                 border: "1px solid var(--color-line)",
                 padding: "18px 20px",

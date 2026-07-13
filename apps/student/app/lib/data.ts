@@ -89,7 +89,7 @@ export const UNIS: University[] = [
 ];
 
 export const COURSES: Course[] = [
-  { id: "mscs", title: "Master of Computer Science", uni: "University of Melbourne", uniId: "melb", faculty: "Faculty of Engineering & IT", level: "Master", duration: "2 years", tuition: "\u09F338.5L/yr", intake: "Feb 2026", abbr: "CS", tint: "#eff4ff", icColor: "#2563eb", ielts: "6.5", pte: "58", toefl: "79", deadline: "31 Oct 2025", salary: "AUD 92,000" },
+  { id: "mscs", title: "Master of Computer Science", uni: "University of Melbourne", uniId: "melb", faculty: "Faculty of Engineering & IT", level: "Master", duration: "2 years", tuition: "\u09F338.5L/yr", intake: "Feb 2026", abbr: "CS", tint: "var(--color-blue-x)", icColor: "var(--color-blue)", ielts: "6.5", pte: "58", toefl: "79", deadline: "31 Oct 2025", salary: "AUD 92,000" },
   { id: "msds", title: "Master of Data Science", uni: "University of Toronto", uniId: "toronto", faculty: "Faculty of Arts & Science", level: "Master", duration: "2 years", tuition: "\u09F342.0L/yr", intake: "Sep 2026", abbr: "DS", tint: "#fff1e9", icColor: "#ea580c", ielts: "6.5", pte: "60", toefl: "93", deadline: "15 Jan 2026", salary: "CAD 95,000" },
   { id: "mba", title: "Master of Business Administration", uni: "University of Manchester", uniId: "manch", faculty: "Alliance Manchester Business School", level: "Master", duration: "18 months", tuition: "\u09F346.0L/yr", intake: "Sep 2026", abbr: "MBA", tint: "#f4efff", icColor: "#7c3aed", ielts: "7.0", pte: "65", toefl: "100", deadline: "30 Nov 2025", salary: "\u00A368,000" },
 ];
@@ -102,10 +102,10 @@ export const DESTINATIONS: Destination[] = [
 ];
 
 export const INTAKES: Intake[] = [
-  { mon: "Feb", day: "01", name: "Australia \u2014 Semester 1", sub: "Melbourne, Sydney, Monash", tag: "Open now", tagColor: "#0f9d58", tagBg: "#e9f9ef" },
-  { mon: "Sep", day: "15", name: "Canada \u2014 Fall intake", sub: "Toronto, UBC, Waterloo", tag: "Popular", tagColor: "#2563eb", tagBg: "#eff4ff" },
-  { mon: "Sep", day: "22", name: "UK \u2014 Autumn intake", sub: "Manchester, Leeds, Bristol", tag: "Closing soon", tagColor: "#e08a1e", tagBg: "#fdf3e6" },
-  { mon: "Jan", day: "10", name: "Canada \u2014 Winter intake", sub: "Limited programs", tag: "Upcoming", tagColor: "#8592ad", tagBg: "#f1f3f8" },
+  { mon: "Feb", day: "01", name: "Australia \u2014 Semester 1", sub: "Melbourne, Sydney, Monash", tag: "Open now", tagColor: "var(--color-green)", tagBg: "var(--color-green-bg)" },
+  { mon: "Sep", day: "15", name: "Canada \u2014 Fall intake", sub: "Toronto, UBC, Waterloo", tag: "Popular", tagColor: "var(--color-blue)", tagBg: "var(--color-blue-x)" },
+  { mon: "Sep", day: "22", name: "UK \u2014 Autumn intake", sub: "Manchester, Leeds, Bristol", tag: "Closing soon", tagColor: "var(--color-amber)", tagBg: "var(--color-amber-bg)" },
+  { mon: "Jan", day: "10", name: "Canada \u2014 Winter intake", sub: "Limited programs", tag: "Upcoming", tagColor: "var(--color-muted)", tagBg: "var(--color-line-2)" },
 ];
 
 export const SCHOLARSHIPS: Scholarship[] = [
@@ -141,19 +141,19 @@ export const FAQS = [
 ];
 
 export const DOCS = [
-  { name: "Passport", status: "Verified", color: "#0f9d58", bg: "#e9f9ef", tint: "#eff4ff", ic: "PP" },
-  { name: "Academic Transcript", status: "Verified", color: "#0f9d58", bg: "#e9f9ef", tint: "#f4efff", ic: "TR" },
-  { name: "IELTS / PTE Score", status: "Missing", color: "#e0492e", bg: "#fdecea", tint: "#fff1e9", ic: "EN" },
-  { name: "Statement of Purpose", status: "Needs Review", color: "#e08a1e", bg: "#fdf3e6", tint: "#e9f9ef", ic: "SOP" },
-  { name: "CV / R\u00E9sum\u00E9", status: "Verified", color: "#0f9d58", bg: "#e9f9ef", tint: "#eef2ff", ic: "CV" },
-  { name: "Certificates", status: "Needs Review", color: "#e08a1e", bg: "#fdf3e6", tint: "#fdf3e6", ic: "CE" },
+  { name: "Passport", status: "Verified", color: "var(--color-green)", bg: "var(--color-green-bg)", tint: "var(--color-blue-x)", ic: "PP" },
+  { name: "Academic Transcript", status: "Verified", color: "var(--color-green)", bg: "var(--color-green-bg)", tint: "#f4efff", ic: "TR" },
+  { name: "IELTS / PTE Score", status: "Missing", color: "var(--color-red)", bg: "var(--danger-bg-hover)", tint: "#fff1e9", ic: "EN" },
+  { name: "Statement of Purpose", status: "Needs Review", color: "var(--color-amber)", bg: "var(--color-amber-bg)", tint: "var(--color-green-bg)", ic: "SOP" },
+  { name: "CV / R\u00E9sum\u00E9", status: "Verified", color: "var(--color-green)", bg: "var(--color-green-bg)", tint: "#eef2ff", ic: "CV" },
+  { name: "Certificates", status: "Needs Review", color: "var(--color-amber)", bg: "var(--color-amber-bg)", tint: "var(--color-amber-bg)", ic: "CE" },
 ];
 
 export const NOTIFS = [
-  { title: "Offer received \uD83C\uDF89", sub: "University of Melbourne \u00B7 MS Computer Science", when: "2h ago", dot: "#0f9d58" },
-  { title: "Missing document", sub: "Upload your IELTS/PTE score to continue", when: "5h ago", dot: "#e0492e" },
-  { title: "Scholarship deadline soon", sub: "Melbourne Graduate Scholarship closes 31 Oct", when: "1d ago", dot: "#e08a1e" },
-  { title: "Application updated", sub: "Your Toronto application moved to Agency Review", when: "2d ago", dot: "#2563eb" },
+  { title: "Offer received \uD83C\uDF89", sub: "University of Melbourne \u00B7 MS Computer Science", when: "2h ago", dot: "var(--color-green)" },
+  { title: "Missing document", sub: "Upload your IELTS/PTE score to continue", when: "5h ago", dot: "var(--color-red)" },
+  { title: "Scholarship deadline soon", sub: "Melbourne Graduate Scholarship closes 31 Oct", when: "1d ago", dot: "var(--color-amber)" },
+  { title: "Application updated", sub: "Your Toronto application moved to Agency Review", when: "2d ago", dot: "var(--color-blue)" },
 ];
 
 export const TRACKER_STEPS = [
@@ -206,8 +206,8 @@ export const COMPARE_EXTRA: Record<string, { living: string; duration: string; i
 };
 
 export const CHAT_TOPICS = [
-  { icon: "\uD83C\uDF93", label: "University shortlist", tint: "#eff4ff", color: "#2563eb" },
-  { icon: "\uD83D\uDCB0", label: "Scholarships & aid", tint: "#e9f9ef", color: "#0f9d58" },
+  { icon: "\uD83C\uDF93", label: "University shortlist", tint: "var(--color-blue-x)", color: "var(--color-blue)" },
+  { icon: "\uD83D\uDCB0", label: "Scholarships & aid", tint: "var(--color-green-bg)", color: "var(--color-green)" },
   { icon: "\uD83C\uDDFA\uD83C\uDDF3", label: "Country comparison", tint: "#f4efff", color: "#7c3aed" },
   { icon: "\uD83D\uDCC4", label: "SOP & documents", tint: "#fff1e9", color: "#ea580c" },
 ];

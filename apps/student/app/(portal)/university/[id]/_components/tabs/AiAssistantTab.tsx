@@ -15,7 +15,7 @@ export default function AiAssistantTab({ universityName }: AiAssistantTabProps) 
         style={{
           maxWidth: 640,
           width: "100%",
-          background: "var(--color-navy)",
+          background: "linear-gradient(135deg,#0a1330,#16224e)",
           borderRadius: 20,
           padding: "48px 40px",
           textAlign: "center",
@@ -50,7 +50,7 @@ export default function AiAssistantTab({ universityName }: AiAssistantTabProps) 
             alignItems: "center",
             gap: 8,
             background: "#fff",
-            color: "var(--color-navy)",
+            color: "#0a1330",
             fontSize: 14.5,
             fontWeight: 700,
             padding: "12px 28px",

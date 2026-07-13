@@ -120,9 +120,9 @@ export function ReviewStep({ form, reviewGroups, setForm, onSubmit, submitting, 
               fill="none"
               style={{ flexShrink: 0, marginTop: 1 }}
             >
-              <circle cx="10" cy="10" r="9" stroke="#2563eb" strokeWidth="1.8" />
-              <path d="M10 9v5" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round" />
-              <circle cx="10" cy="6.5" r="0.8" fill="#2563eb" />
+              <circle cx="10" cy="10" r="9" stroke="var(--color-blue)" strokeWidth="1.8" />
+              <path d="M10 9v5" stroke="var(--color-blue)" strokeWidth="1.8" strokeLinecap="round" />
+              <circle cx="10" cy="6.5" r="0.8" fill="var(--color-blue)" />
             </svg>
             <p style={{ fontSize: 13.5, color: "var(--color-sub)", margin: 0, lineHeight: 1.6 }}>
               You can update anything later from your application dashboard. Our
@@ -137,9 +137,9 @@ export function ReviewStep({ form, reviewGroups, setForm, onSubmit, submitting, 
               style={{
                 padding: "10px 14px",
                 borderRadius: 10,
-                background: "#fef2f2",
+                background: "var(--danger-bg-hover)",
                 border: "1px solid #fecaca",
-                color: "#e0492e",
+                color: "var(--color-red)",
                 fontSize: 14,
                 fontWeight: 500,
                 marginBottom: 16,

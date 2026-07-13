@@ -20,7 +20,7 @@ export default function UniversityHero({
   setBannerIdx,
   initials,
 }: UniversityHeroProps) {
-  const accent = "#2563eb";
+  const accent = "var(--color-blue)";
 
   return (
     <div

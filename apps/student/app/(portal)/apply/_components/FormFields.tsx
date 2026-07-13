@@ -108,7 +108,7 @@ export function RadioPills({
                 padding: "10px 20px",
                 borderRadius: 11,
                 border: selected ? "1.5px solid var(--color-blue)" : "1px solid var(--color-line)",
-                background: selected ? "var(--color-blue)" : "#fbfcfe",
+                background: selected ? "var(--color-blue)" : "var(--color-line-2)",
                 color: selected ? "#fff" : "var(--color-sub)",
                 fontSize: 13.5,
                 fontWeight: 700,

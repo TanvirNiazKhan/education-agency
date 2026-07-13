@@ -101,7 +101,7 @@ export default function AiCounsellorSection({ prompts }: AiCounsellorSectionProp
               padding: "10px 22px",
               borderRadius: 12,
               background: "#fff",
-              color: "var(--color-navy)",
+              color: "#0a1330",
               fontSize: 14,
               fontWeight: 700,
               textDecoration: "none",

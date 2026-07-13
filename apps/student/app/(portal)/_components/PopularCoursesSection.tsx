@@ -60,7 +60,7 @@ export default function PopularCoursesSection({ courses }: PopularCoursesSection
             href={`/course/${c.id}`}
             className="card-hover"
             style={{
-              background: "#fff",
+              background: "var(--color-card)",
               borderRadius: 18,
               border: "1px solid var(--color-line)",
               padding: "20px 20px 18px",

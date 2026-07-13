@@ -48,22 +48,31 @@ const COUNTRY_GRADIENTS: Record<string, string> = {
 };
 
 const COURSE_COLORS = [
-  { tint: "#eff4ff", icColor: "#2563eb" },
+  { tint: "var(--color-blue-x)", icColor: "var(--color-blue)" },
   { tint: "#fff1e9", icColor: "#ea580c" },
   { tint: "#f4efff", icColor: "#7c3aed" },
-  { tint: "#e9f9ef", icColor: "#0f9d58" },
-  { tint: "#fdf3e6", icColor: "#e08a1e" },
+  { tint: "var(--color-green-bg)", icColor: "var(--color-green)" },
+  { tint: "var(--color-amber-bg)", icColor: "var(--color-amber)" },
   { tint: "#eef2ff", icColor: "#4f46e5" },
 ];
 
+const IMG_BASE = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:3001";
+
 function mapUniversities(unis: ApiUniversity[]) {
-  return unis.map((u, i) => ({
-    id: u.id,
-    name: u.name,
-    city: u.city?.name || "",
-    country: u.country?.name || "",
-    img: UNI_GRADIENTS[i % UNI_GRADIENTS.length],
-  }));
+  return unis.map((u, i) => {
+    const banner = (u.images ?? [])
+      .filter((img) => img.type === "banner" && img.is_active)
+      .sort((a, b) => a.sort_order - b.sort_order)[0];
+    return {
+      id: u.id,
+      name: u.name,
+      city: u.city?.name || "",
+      country: u.country?.name || "",
+      img: banner
+        ? `url(${IMG_BASE}${banner.url}) center/cover no-repeat`
+        : UNI_GRADIENTS[i % UNI_GRADIENTS.length],
+    };
+  });
 }
 
 function mapCourses(courses: ApiCourse[]) {

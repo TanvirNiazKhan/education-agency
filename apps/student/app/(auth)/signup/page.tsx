@@ -54,7 +54,7 @@ export default function SignupPage() {
     fontSize: 15,
     border: "1.5px solid var(--color-line)",
     borderRadius: 10,
-    background: "#fff",
+    background: "var(--color-card)",
     color: "var(--color-ink)",
     transition: "border-color .15s",
   };
@@ -73,7 +73,7 @@ export default function SignupPage() {
       style={{
         width: "100%",
         maxWidth: 480,
-        background: "#fff",
+        background: "var(--color-card)",
         borderRadius: 16,
         border: "1px solid var(--color-line)",
         boxShadow: "var(--shadow-md)",
@@ -94,7 +94,7 @@ export default function SignupPage() {
           style={{
             padding: "10px 14px",
             borderRadius: 10,
-            background: "#fef2f2",
+            background: "var(--danger-bg-hover)",
             border: "1px solid #fecaca",
             color: "var(--color-red)",
             fontSize: 14,

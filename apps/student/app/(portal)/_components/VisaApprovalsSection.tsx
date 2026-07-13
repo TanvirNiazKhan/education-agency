@@ -66,7 +66,7 @@ export default function VisaApprovalsSection({ visas }: VisaApprovalsSectionProp
             style={{
               padding: "5px 14px",
               borderRadius: 100,
-              background: "#fff",
+              background: "var(--color-card)",
               border: "1px solid #cdeed8",
               fontSize: 12.5,
               fontWeight: 700,
@@ -85,7 +85,7 @@ export default function VisaApprovalsSection({ visas }: VisaApprovalsSectionProp
             <div
               key={v.name}
               style={{
-                background: "#fff",
+                background: "var(--color-card)",
                 borderRadius: 14,
                 padding: "14px 16px",
                 border: "1px solid #cdeed8",

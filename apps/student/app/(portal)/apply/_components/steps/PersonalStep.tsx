@@ -40,9 +40,9 @@ export function PersonalStep({ form, set }: PersonalStepProps) {
         }}
       >
         <svg width={28} height={28} viewBox="0 0 24 24" fill="none">
-          <rect x="3" y="4" width="18" height="16" rx="2" stroke="#2563eb" strokeWidth="1.8" />
-          <circle cx="12" cy="11" r="3" stroke="#2563eb" strokeWidth="1.8" />
-          <path d="M7 17c0-2.21 2.24-4 5-4s5 1.79 5 4" stroke="#2563eb" strokeWidth="1.8" />
+          <rect x="3" y="4" width="18" height="16" rx="2" stroke="var(--color-blue)" strokeWidth="1.8" />
+          <circle cx="12" cy="11" r="3" stroke="var(--color-blue)" strokeWidth="1.8" />
+          <path d="M7 17c0-2.21 2.24-4 5-4s5 1.79 5 4" stroke="var(--color-blue)" strokeWidth="1.8" />
         </svg>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "var(--color-blue)" }}>

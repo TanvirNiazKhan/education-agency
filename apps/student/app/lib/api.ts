@@ -249,6 +249,7 @@ export interface ApiUniversity {
   featured: boolean;
   country?: { id: string; name: string; iso_code: string };
   city?: { id: string; name: string };
+  images?: { id: string; url: string; type: string; sort_order: number; is_active: boolean }[];
 }
 
 export interface ApiCourse {

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useAuth } from "../../contexts/auth-context";
 
 interface UniCard {
   id: string;
@@ -17,6 +20,7 @@ interface RecommendedUnisSectionProps {
 }
 
 export default function RecommendedUnisSection({ unis }: RecommendedUnisSectionProps) {
+  const { user } = useAuth();
   return (
     <section style={{ marginTop: 44 }}>
       <div
@@ -44,7 +48,7 @@ export default function RecommendedUnisSection({ unis }: RecommendedUnisSectionP
               marginBottom: 10,
             }}
           >
-            ✦ For you, Ayaan
+            ✦ {user ? `For you, ${user.first_name}` : "For you"}
           </span>
           <h2
             style={{
@@ -88,7 +92,7 @@ export default function RecommendedUnisSection({ unis }: RecommendedUnisSectionP
             href={`/university/${u.id}`}
             className="card-hover"
             style={{
-              background: "#fff",
+              background: "var(--color-card)",
               borderRadius: 18,
               border: "1px solid var(--color-line)",
               overflow: "hidden",

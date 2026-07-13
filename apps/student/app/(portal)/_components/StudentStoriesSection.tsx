@@ -24,7 +24,7 @@ export default function StudentStoriesSection({ stories }: StudentStoriesSection
           <div
             key={s.name}
             style={{
-              background: "#fff",
+              background: "var(--color-card)",
               borderRadius: 18,
               border: "1px solid var(--color-line)",
               padding: "22px 22px 20px",

@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Sun, Moon } from "lucide-react";
 import { NAV_ITEMS } from "../lib/data";
 import { useAuth } from "../contexts/auth-context";
+import { useTheme } from "../contexts/theme-context";
 
 const API_STATIC = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api").replace(/\/api$/, "");
 
@@ -16,6 +17,7 @@ interface HeaderProps {
 export default function Header({ onSpotlightOpen }: HeaderProps) {
   const pathname = usePathname();
   const { user, isLoading, logout } = useAuth();
+  const { theme, toggle } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -36,7 +38,7 @@ export default function Header({ onSpotlightOpen }: HeaderProps) {
         position: "sticky",
         top: 0,
         zIndex: 60,
-        background: "rgba(255,255,255,.82)",
+        background: "var(--header-bg)",
         backdropFilter: "saturate(180%) blur(16px)",
         WebkitBackdropFilter: "saturate(180%) blur(16px)",
         borderBottom: "1px solid var(--color-line)",
@@ -146,7 +148,7 @@ export default function Header({ onSpotlightOpen }: HeaderProps) {
               fontFamily: "inherit",
               padding: "2px 7px",
               borderRadius: 6,
-              background: "#fff",
+              background: "var(--color-card)",
               border: "1px solid var(--color-line)",
               color: "var(--color-muted)",
               lineHeight: "18px",
@@ -155,6 +157,28 @@ export default function Header({ onSpotlightOpen }: HeaderProps) {
           >
             ⌘K
           </kbd>
+        </button>
+
+        {/* Theme toggle */}
+        <button
+          onClick={toggle}
+          type="button"
+          aria-label="Toggle theme"
+          style={{
+            width: 38,
+            height: 38,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "var(--color-line-2)",
+            border: "1px solid var(--color-line)",
+            borderRadius: 11,
+            cursor: "pointer",
+            color: "var(--color-sub)",
+            flexShrink: 0,
+          }}
+        >
+          {theme === "dark" ? <Sun size={17} strokeWidth={2} /> : <Moon size={17} strokeWidth={2} />}
         </button>
 
         {/* User avatar / Auth links */}
@@ -217,7 +241,7 @@ export default function Header({ onSpotlightOpen }: HeaderProps) {
                     top: "calc(100% + 10px)",
                     right: 0,
                     width: 220,
-                    background: "#fff",
+                    background: "var(--color-card)",
                     border: "1px solid var(--color-line)",
                     borderRadius: 14,
                     boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
@@ -254,7 +278,7 @@ export default function Header({ onSpotlightOpen }: HeaderProps) {
                     <button
                       onClick={() => { setMenuOpen(false); logout(); }}
                       style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 9, fontSize: 13.5, fontWeight: 600, color: "#dc2626", background: "none", border: "none", cursor: "pointer" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "#fef2f2")}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--danger-bg-hover)")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>

@@ -12,7 +12,7 @@ const INPUT: React.CSSProperties = {
   fontSize: 14,
   border: "1.5px solid var(--color-line)",
   borderRadius: 10,
-  background: "#fff",
+  background: "var(--color-card)",
   color: "var(--color-ink)",
 };
 
@@ -358,7 +358,7 @@ export default function ProfilePage() {
       </div>
 
       {error && (
-        <div style={{ padding: "12px 16px", borderRadius: 10, background: "#fef2f2", border: "1px solid #fecaca", color: "var(--color-red)", fontSize: 14, fontWeight: 500, marginBottom: 20 }}>
+        <div style={{ padding: "12px 16px", borderRadius: 10, background: "var(--danger-bg-hover)", border: "1px solid #fecaca", color: "var(--color-red)", fontSize: 14, fontWeight: 500, marginBottom: 20 }}>
           {error}
         </div>
       )}
