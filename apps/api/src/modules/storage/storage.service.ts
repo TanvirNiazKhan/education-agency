@@ -3,8 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
   PutObjectCommand,
+  GetObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { writeFile, unlink, mkdir } from 'fs/promises';
 import { join, dirname } from 'path';
 
@@ -33,50 +35,67 @@ export class StorageService {
 
   /**
    * Upload a file buffer to storage.
-   * @param key - relative path like "students/{id}/applications/{appId}/passport/file.pdf"
-   * @param buffer - file contents
-   * @param mimeType - file MIME type
-   * @returns public URL or path to access the file
+   * Returns the storage key (not a URL) — use getSignedUrl() to get accessible URL.
    */
   async upload(key: string, buffer: Buffer, mimeType: string): Promise<string> {
     if (this.driver === 's3') {
-      return this.uploadToS3(key, buffer, mimeType);
+      await this.s3Client!.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: mimeType,
+        }),
+      );
+      return key;
     }
     return this.uploadToLocal(key, buffer);
   }
 
   /**
    * Delete a file from storage.
-   * @param key - relative path (same format as upload key)
    */
   async delete(key: string): Promise<void> {
     if (this.driver === 's3') {
-      return this.deleteFromS3(key);
+      await this.s3Client!.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+        }),
+      );
+      return;
     }
     return this.deleteFromLocal(key);
   }
 
   /**
-   * Get the public URL for a stored file.
+   * Get an accessible URL for a stored file.
+   * For S3: returns a presigned URL (default 1 hour expiry).
+   * For local: returns the /uploads/... path.
    */
-  getUrl(key: string): string {
-    if (this.driver === 's3') {
-      const endpoint = this.config.get<string>('storage.s3.endpoint', '');
-      return `${endpoint}/${this.bucket}/${key}`;
+  async getAccessUrl(fileUrl: string, expiresInSeconds = 3600): Promise<string> {
+    if (this.driver !== 's3') {
+      return fileUrl;
     }
-    return `/uploads/${key}`;
+
+    const key = this.extractKey(fileUrl);
+    return getSignedUrl(
+      this.s3Client!,
+      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+      { expiresIn: expiresInSeconds },
+    );
   }
 
-  private async uploadToS3(key: string, buffer: Buffer, mimeType: string): Promise<string> {
-    await this.s3Client!.send(
-      new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-        Body: buffer,
-        ContentType: mimeType,
-      }),
-    );
-    return this.getUrl(key);
+  /**
+   * Extract the S3 key from a stored file_url value.
+   * Handles both raw keys ("students/...") and legacy "/uploads/..." paths.
+   */
+  extractKey(fileUrl: string): string {
+    if (fileUrl.startsWith('/uploads/')) {
+      return fileUrl.replace('/uploads/', '');
+    }
+    // Already a raw key
+    return fileUrl;
   }
 
   private async uploadToLocal(key: string, buffer: Buffer): Promise<string> {
@@ -84,15 +103,6 @@ export class StorageService {
     await mkdir(dirname(filePath), { recursive: true });
     await writeFile(filePath, buffer);
     return `/uploads/${key}`;
-  }
-
-  private async deleteFromS3(key: string): Promise<void> {
-    await this.s3Client!.send(
-      new DeleteObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-      }),
-    );
   }
 
   private async deleteFromLocal(key: string): Promise<void> {

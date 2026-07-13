@@ -91,8 +91,7 @@ export class ApplicationsService {
     });
     if (!doc) throw new NotFoundException('Document not found');
 
-    // Extract storage key from URL
-    const key = this.extractKeyFromUrl(doc.file_url);
+    const key = this.storageService.extractKey(doc.file_url);
     await this.storageService.delete(key);
 
     await this.documentRepo.delete(docId);
@@ -100,7 +99,13 @@ export class ApplicationsService {
 
   async getDocuments(applicationId: string, userId: string): Promise<ApplicationDocument[]> {
     await this.getById(applicationId, userId); // ownership check
-    return this.documentRepo.find({ where: { application_id: applicationId } });
+    const docs = await this.documentRepo.find({ where: { application_id: applicationId } });
+    return Promise.all(
+      docs.map(async (doc) => ({
+        ...doc,
+        file_url: await this.storageService.getAccessUrl(doc.file_url),
+      })),
+    );
   }
 
   async getAllApplications() {
@@ -126,19 +131,4 @@ export class ApplicationsService {
     return this.applicationRepository.changeStatus(id, application.status, dto.status, dto.comment);
   }
 
-  private extractKeyFromUrl(fileUrl: string): string {
-    // For local URLs like "/uploads/students/..." strip the "/uploads/" prefix
-    if (fileUrl.startsWith('/uploads/')) {
-      return fileUrl.replace('/uploads/', '');
-    }
-    // For S3 URLs, extract path after bucket name
-    // e.g. "https://endpoint/bucket/students/..." -> "students/..."
-    const parts = fileUrl.split('/');
-    // Find "students" or "avatars" segment and take everything from there
-    const startIdx = parts.findIndex((p) => p === 'students' || p === 'avatars');
-    if (startIdx !== -1) {
-      return parts.slice(startIdx).join('/');
-    }
-    return fileUrl;
-  }
 }

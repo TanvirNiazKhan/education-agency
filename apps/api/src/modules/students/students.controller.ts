@@ -65,8 +65,9 @@ export class StudentsController {
     const filename = `avatar_${uuid()}${ext}`;
     const key = `avatars/${req.user.id}/${filename}`;
 
-    const avatarUrl = await this.storageService.upload(key, file.buffer, file.mimetype);
-    await this.usersService.update(req.user.id, { avatar_url: avatarUrl });
-    return { avatar_url: avatarUrl };
+    const storedUrl = await this.storageService.upload(key, file.buffer, file.mimetype);
+    await this.usersService.update(req.user.id, { avatar_url: storedUrl });
+    const accessUrl = await this.storageService.getAccessUrl(storedUrl);
+    return { avatar_url: accessUrl };
   }
 }

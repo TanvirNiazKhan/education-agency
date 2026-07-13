@@ -6,6 +6,7 @@ import {
   Body,
   ParseUUIDPipe,
   Res,
+  Redirect,
   NotFoundException,
 } from '@nestjs/common';
 import { Response } from 'express';
@@ -15,7 +16,7 @@ import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { createReadStream, existsSync } from 'fs';
 import { join } from 'path';
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { StorageService } from '@modules/storage/storage.service';
 import { ApplicationsService } from './applications.service';
 import { UpdateApplicationAdminDto, ChangeStatusDto } from './dto/update-application.dto';
 import { ApplicationDocument } from './entities/application-document.entity';
@@ -26,6 +27,7 @@ export class AdminApplicationsController {
   constructor(
     private readonly applicationsService: ApplicationsService,
     private readonly config: ConfigService,
+    private readonly storageService: StorageService,
     @InjectRepository(ApplicationDocument)
     private readonly documentRepo: Repository<ApplicationDocument>,
   ) {}
@@ -67,39 +69,20 @@ export class AdminApplicationsController {
     });
     if (!doc) throw new NotFoundException('Document not found');
 
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(doc.file_name)}"`);
-    res.setHeader('Content-Type', doc.mime_type || 'application/octet-stream');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-
     const driver = this.config.get<string>('storage.driver', 'local');
 
     if (driver === 's3') {
-      const s3 = new S3Client({
-        endpoint: this.config.get<string>('storage.s3.endpoint'),
-        region: this.config.get<string>('storage.s3.region'),
-        credentials: {
-          accessKeyId: this.config.get<string>('storage.s3.accessKeyId', ''),
-          secretAccessKey: this.config.get<string>('storage.s3.secretAccessKey', ''),
-        },
-        forcePathStyle: true,
-      });
-
-      // Extract key from URL
-      const parts = doc.file_url.split('/');
-      const startIdx = parts.findIndex((p) => p === 'students' || p === 'avatars');
-      const key = startIdx !== -1 ? parts.slice(startIdx).join('/') : doc.file_url;
-
-      const result = await s3.send(
-        new GetObjectCommand({
-          Bucket: this.config.get<string>('storage.s3.bucket'),
-          Key: key,
-        }),
-      );
-      (result.Body as NodeJS.ReadableStream).pipe(res);
-    } else {
-      const filePath = join(process.cwd(), doc.file_url);
-      if (!existsSync(filePath)) throw new NotFoundException('File not found on disk');
-      createReadStream(filePath).pipe(res);
+      const signedUrl = await this.storageService.getAccessUrl(doc.file_url);
+      res.redirect(signedUrl);
+      return;
     }
+
+    const filePath = join(process.cwd(), doc.file_url);
+    if (!existsSync(filePath)) throw new NotFoundException('File not found on disk');
+
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(doc.file_name)}"`);
+    res.setHeader('Content-Type', doc.mime_type || 'application/octet-stream');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    createReadStream(filePath).pipe(res);
   }
 }

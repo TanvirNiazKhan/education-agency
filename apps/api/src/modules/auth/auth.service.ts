@@ -6,6 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '@modules/users/users.service';
+import { StorageService } from '@modules/storage/storage.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { User, UserRole } from '@modules/users/entities/user.entity';
@@ -16,6 +17,7 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly storageService: StorageService,
   ) {}
 
   async signup(dto: SignupDto) {
@@ -59,12 +61,18 @@ export class AuthService {
   async getProfile(userId: string) {
     const user = await this.usersService.findById(userId);
     const { password, ...result } = user;
+    if (result.avatar_url) {
+      result.avatar_url = await this.storageService.getAccessUrl(result.avatar_url);
+    }
     return result;
   }
 
   async updateProfile(userId: string, data: { first_name?: string; last_name?: string; phone?: string }) {
     const user = await this.usersService.update(userId, data);
     const { password, ...rest } = user;
+    if (rest.avatar_url) {
+      rest.avatar_url = await this.storageService.getAccessUrl(rest.avatar_url);
+    }
     return rest;
   }
 
@@ -77,12 +85,17 @@ export class AuthService {
     return { message: 'Password updated successfully' };
   }
 
-  private buildAuthResponse(user: User) {
+  private async buildAuthResponse(user: User) {
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
       role: user.role,
     };
+
+    let avatarUrl: string | null = null;
+    if (user.avatar_url) {
+      avatarUrl = await this.storageService.getAccessUrl(user.avatar_url);
+    }
 
     return {
       access_token: this.jwtService.sign(payload),
@@ -93,7 +106,7 @@ export class AuthService {
         email: user.email,
         phone: user.phone,
         role: user.role,
-        avatar_url: user.avatar_url ?? null,
+        avatar_url: avatarUrl,
       },
     };
   }
