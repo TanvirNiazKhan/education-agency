@@ -13,6 +13,10 @@ import { CoursesModule } from './modules/courses/courses.module';
 import { UniversityImagesModule } from './modules/university-images/university-images.module';
 import { ScholarshipsModule } from './modules/scholarships/scholarships.module';
 import { IntakesModule } from './modules/intakes/intakes.module';
+import { UsersModule } from './modules/users/users.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { StudentsModule } from './modules/students/students.module';
+import { ApplicationsModule } from './modules/applications/applications.module';
 
 @Module({
   imports: [
@@ -25,6 +29,10 @@ import { IntakesModule } from './modules/intakes/intakes.module';
       serveRoot: '/uploads',
     }),
     DatabaseModule,
+    UsersModule,
+    AuthModule,
+    StudentsModule,
+    ApplicationsModule,
     CountriesModule,
     CitiesModule,
     UniversitiesModule,

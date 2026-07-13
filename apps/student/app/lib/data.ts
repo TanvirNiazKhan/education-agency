@@ -219,19 +219,19 @@ export const JOURNEY_STEPS = [
 ];
 
 export const DOCS_REQUIRED = [
-  { name: "Passport", hint: "Bio page + contact details page." },
-  { name: "National ID (NID)", hint: "Both sides, clearly readable." },
-  { name: "Academic documents", hint: "Year 10 onward — all marksheets & completion certificates." },
-  { name: "English test result", hint: "IELTS or PTE result copy." },
-  { name: "Detailed résumé / CV", hint: "Your up-to-date CV." },
-  { name: "Legal guardian\u2019s NID", hint: "Your guardian\u2019s national ID." },
-  { name: "Statement of Purpose (SOP)", hint: "Why you chose this course and university." },
+  { name: "Passport", hint: "Bio page + contact details page.", doc_type: "passport" },
+  { name: "National ID (NID)", hint: "Both sides, clearly readable.", doc_type: "nid" },
+  { name: "Academic documents", hint: "Year 10 onward — all marksheets & completion certificates.", doc_type: "academic" },
+  { name: "English test result", hint: "IELTS or PTE result copy.", doc_type: "english_test" },
+  { name: "Detailed résumé / CV", hint: "Your up-to-date CV.", doc_type: "cv" },
+  { name: "Legal guardian\u2019s NID", hint: "Your guardian\u2019s national ID.", doc_type: "guardian_nid" },
+  { name: "Statement of Purpose (SOP)", hint: "Why you chose this course and university.", doc_type: "sop" },
 ];
 
 export const DOCS_OPTIONAL = [
-  { name: "Course outlines", hint: "Only if you\u2019re applying for credit transfer." },
-  { name: "Gap explanation", hint: "With supporting documents, if you have a study or work gap." },
-  { name: "Spouse documents", hint: "Passport, marriage certificate & academics, if applicable." },
+  { name: "Course outlines", hint: "Only if you\u2019re applying for credit transfer.", doc_type: "course_outlines" },
+  { name: "Gap explanation", hint: "With supporting documents, if you have a study or work gap.", doc_type: "gap_explanation" },
+  { name: "Spouse documents", hint: "Passport, marriage certificate & academics, if applicable.", doc_type: "spouse_docs" },
 ];
 
 export const INSTITUTIONS = ["CQUniversity Australia", "University of Melbourne", "University of Sydney", "Monash University", "University of Toronto", "University of Manchester"];

@@ -21,6 +21,8 @@ export const api = {
     request<T>(path, { method: "POST", body: JSON.stringify(body) }),
   put: <T>(path: string, body: unknown) =>
     request<T>(path, { method: "PUT", body: JSON.stringify(body) }),
+  patch: <T>(path: string, body: unknown) =>
+    request<T>(path, { method: "PATCH", body: JSON.stringify(body) }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
 };
 
@@ -338,6 +340,142 @@ export const intakesApi = {
   update: (id: string, data: Partial<CreateIntakeData>) =>
     api.put<Intake>(`/intakes/${id}`, data),
   delete: (id: string) => api.delete<void>(`/intakes/${id}`),
+};
+
+export interface AdminApplication {
+  id: string;
+  status: string;
+  commence_month: string | null;
+  commence_year: string | null;
+  campus: string | null;
+  application_type: string | null;
+  study_location: string | null;
+  student_type: string | null;
+  enrolment_type: string | null;
+  submitted_at: string | null;
+  notes: string | null;
+  created_at: string;
+  student: {
+    id: string;
+    nationality: string | null;
+    passport_no: string | null;
+    passport_expiry_date: string | null;
+    passport_issue_date: string | null;
+    passport_issue_place: string | null;
+    passport_birth_place: string | null;
+    gender: string | null;
+    date_of_birth: string | null;
+    marital_status: string | null;
+    mobile: string | null;
+    skype: string | null;
+    visa_refused: boolean;
+    user: {
+      id: string;
+      first_name: string;
+      last_name: string;
+      email: string;
+      phone: string;
+    };
+    addresses: {
+      id: string;
+      type: string;
+      street: string | null;
+      apt: string | null;
+      city: string | null;
+      state: string | null;
+      postcode: string | null;
+      country: string | null;
+    }[];
+    emergency_contacts: {
+      id: string;
+      relationship: string | null;
+      first_name: string | null;
+      last_name: string | null;
+      mobile: string | null;
+      other_phone: string | null;
+      email: string | null;
+    }[];
+    education: {
+      id: string;
+      level: string | null;
+      completion_year: string | null;
+      english_test_type: string | null;
+      english_test_date: string | null;
+      score_overall: number | null;
+      score_reading: number | null;
+      score_listening: number | null;
+      score_writing: number | null;
+      score_speaking: number | null;
+    }[];
+    work_experience: {
+      id: string;
+      employer: string | null;
+      manager: string | null;
+      start_date: string | null;
+      end_date: string | null;
+      professional_membership: string | null;
+    }[];
+  };
+  university: {
+    id: string;
+    name: string;
+    short_name: string | null;
+    country?: { id: string; name: string; iso_code: string };
+  };
+  course: {
+    id: string;
+    name: string;
+    course_code: string;
+    faculty?: { id: string; name: string };
+  };
+  documents: {
+    id: string;
+    application_id: string;
+    document_type: string;
+    file_name: string;
+    file_url: string;
+    status: string;
+    created_at: string;
+  }[];
+  status_history?: {
+    id: string;
+    from_status: string | null;
+    to_status: string;
+    comment: string | null;
+    created_at: string;
+  }[];
+}
+
+export type UpdateApplicationData = {
+  campus?: string;
+  application_type?: string;
+  study_location?: string;
+  student_type?: string;
+  enrolment_type?: string;
+  commence_month?: string;
+  commence_year?: string;
+  notes?: string;
+};
+
+export const APPLICATION_STATUSES = [
+  { value: 'submitted', label: 'Submitted' },
+  { value: 'under_review', label: 'Under Review' },
+  { value: 'documents_requested', label: 'Documents Requested' },
+  { value: 'conditional_offer', label: 'Conditional Offer' },
+  { value: 'unconditional_offer', label: 'Unconditional Offer' },
+  { value: 'accepted', label: 'Accepted' },
+  { value: 'enrolled', label: 'Enrolled' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'withdrawn', label: 'Withdrawn' },
+] as const;
+
+export const applicationsApi = {
+  listAll: () => api.get<AdminApplication[]>('/admin/applications'),
+  getById: (id: string) => api.get<AdminApplication>(`/admin/applications/${id}`),
+  update: (id: string, data: UpdateApplicationData) =>
+    api.patch<AdminApplication>(`/admin/applications/${id}`, data),
+  changeStatus: (id: string, status: string, comment?: string) =>
+    api.patch<AdminApplication>(`/admin/applications/${id}/status`, { status, comment }),
 };
 
 export const universityImagesApi = {

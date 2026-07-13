@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { JOURNEY_STEPS } from "../../lib/data";
+import { upsertStudentProfile, createApplication } from "../../lib/api";
+import { useAuth } from "../../contexts/auth-context";
 
 import { INITIAL_FORM, FormState } from "./_components/types";
 import { ProgressBar } from "./_components/ProgressBar";
@@ -31,12 +33,50 @@ export default function ApplyPage() {
 
 function ApplyPageInner() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { token, user } = useAuth();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>({ ...INITIAL_FORM });
   const [uploadedDocs, setUploadedDocs] = useState<Set<string>>(new Set());
   const [universities, setUniversities] = useState<{ id: string; name: string }[]>([]);
   const [courses, setCourses] = useState<{ id: string; name: string; faculty?: { name: string } }[]>([]);
   const [presetUniversity, setPresetUniversity] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [draftApplicationId, setDraftApplicationId] = useState<string | null>(null);
+
+  const DRAFT_KEY = "odyssey_apply_draft";
+
+  // Load draft from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setForm((f) => ({ ...f, ...parsed }));
+      }
+    } catch {}
+  }, []);
+
+  // Auto-save draft on form change
+  useEffect(() => {
+    if (!form.submitted) {
+      try { localStorage.setItem(DRAFT_KEY, JSON.stringify(form)); } catch {}
+    }
+  }, [form]);
+
+  // Pre-fill name/email from logged-in user
+  useEffect(() => {
+    if (user) {
+      setForm((f) => ({
+        ...f,
+        firstName: f.firstName || user.first_name,
+        lastName: f.lastName || user.last_name,
+        email: f.email || user.email,
+        mobile: f.mobile || user.phone || "",
+      }));
+    }
+  }, [user]);
 
   // Fetch universities list + pre-fill from query params
   useEffect(() => {
@@ -50,16 +90,14 @@ function ApplyPageInner() {
 
       if (courseId) {
         fetch(`${API_BASE}/courses/${courseId}`).then((r) => r.json()).then((c: { name: string; faculty?: { name: string; university_id: string; university?: { name: string } } }) => {
-          const uniName = c.faculty?.university?.name || unis.find((u) => u.id === c.faculty?.university_id)?.name || "";
-          setForm((f) => ({ ...f, institution: uniName, course: c.name, campus: c.faculty?.name || "" }));
-          // Load courses for that university
-          if (c.faculty?.university_id) {
-            loadCoursesForUni(c.faculty.university_id);
-          }
+          const uniId2 = c.faculty?.university_id || "";
+          const uniName = c.faculty?.university?.name || unis.find((u) => u.id === uniId2)?.name || "";
+          setForm((f) => ({ ...f, institution: uniName, institution_id: uniId2, course: c.name, course_id: courseId, campus: c.faculty?.name || "" }));
+          if (uniId2) loadCoursesForUni(uniId2);
         }).catch(() => {});
       } else if (uniId) {
         const uni = unis.find((u) => u.id === uniId);
-        if (uni) setForm((f) => ({ ...f, institution: uni.name }));
+        if (uni) setForm((f) => ({ ...f, institution: uni.name, institution_id: uni.id }));
         loadCoursesForUni(uniId);
       }
     }).catch(() => {});
@@ -84,7 +122,29 @@ function ApplyPageInner() {
     setForm((f) => ({ ...f, [key]: val }));
 
   const back = () => setStep((s) => Math.max(0, s - 1));
-  const next = () => setStep((s) => Math.min(totalSteps - 1, s + 1));
+  const next = async () => {
+    const nextStep = Math.min(totalSteps - 1, step + 1);
+    // Create draft application when entering Documents step (step 7)
+    if (nextStep === 7 && !draftApplicationId && token && form.institution_id && form.course_id) {
+      try {
+        const app = await createApplication(token, {
+          university_id: form.institution_id,
+          course_id: form.course_id,
+          campus: form.campus || undefined,
+          application_type: form.appType,
+          study_location: form.studyLocation,
+          student_type: form.studentType,
+          enrolment_type: form.enrolType,
+          commence_month: form.commenceMonth || undefined,
+          commence_year: form.commenceYear || undefined,
+        }) as { id: string };
+        setDraftApplicationId(app.id);
+      } catch {
+        // Non-blocking — upload button shows warning if no applicationId
+      }
+    }
+    setStep(nextStep);
+  };
 
   const toggleDoc = (name: string) => {
     setUploadedDocs((prev) => {
@@ -94,6 +154,109 @@ function ApplyPageInner() {
       return next;
     });
   };
+
+  /* ── Submit handler ────────────────────────────────────────────── */
+  async function handleSubmit() {
+    if (!token) return;
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      // 1. Save student profile
+      await upsertStudentProfile(token, {
+        personal: {
+          gender: form.gender,
+          date_of_birth: form.dob || undefined,
+          marital_status: form.maritalStatus,
+          mobile: form.mobile,
+          home_phone: form.homePhone || undefined,
+          skype: form.skype || undefined,
+          nationality: form.nationality,
+          passport_no: form.passportNo || undefined,
+          passport_issue_date: form.passIssueDate || undefined,
+          passport_expiry_date: form.passExpiryDate || undefined,
+          passport_issue_place: form.passIssuePlace || undefined,
+          passport_birth_place: form.passBirthPlace || undefined,
+          visa_refused: form.visaRefused === "Yes",
+        },
+        current_address: {
+          street: form.curStreet || undefined,
+          apt: form.curApt || undefined,
+          city: form.curCity || undefined,
+          state: form.curState || undefined,
+          postcode: form.curPostcode || undefined,
+          country: form.curCountry || undefined,
+        },
+        permanent_address: form.sameAsCurrent
+          ? {
+              street: form.curStreet || undefined,
+              apt: form.curApt || undefined,
+              city: form.curCity || undefined,
+              state: form.curState || undefined,
+              postcode: form.curPostcode || undefined,
+              country: form.curCountry || undefined,
+            }
+          : {
+              street: form.permStreet || undefined,
+              apt: form.permApt || undefined,
+              city: form.permCity || undefined,
+              state: form.permState || undefined,
+              postcode: form.permPostcode || undefined,
+              country: form.permCountry || undefined,
+            },
+        emergency_contact: {
+          relationship: form.emRelationship || undefined,
+          first_name: form.emFirstName || undefined,
+          last_name: form.emLastName || undefined,
+          mobile: form.emMobile || undefined,
+          other_phone: form.emOtherPhone || undefined,
+          email: form.emEmail || undefined,
+        },
+        education: {
+          level: form.eduLevel || undefined,
+          completion_year: form.eduYear || undefined,
+          english_test_type: form.englishType || undefined,
+          english_test_date: form.englishDate || undefined,
+          score_overall: form.engOverall ? parseFloat(form.engOverall) : undefined,
+          score_reading: form.engReading ? parseFloat(form.engReading) : undefined,
+          score_listening: form.engListening ? parseFloat(form.engListening) : undefined,
+          score_writing: form.engWriting ? parseFloat(form.engWriting) : undefined,
+          score_speaking: form.engSpeaking ? parseFloat(form.engSpeaking) : undefined,
+        },
+        work_experience:
+          form.workedAfter === "Yes"
+            ? {
+                employer: form.employer || undefined,
+                manager: form.manager || undefined,
+                start_date: form.workStart || undefined,
+                end_date: form.workEnd || undefined,
+                professional_membership: form.profMembership || undefined,
+              }
+            : undefined,
+      });
+
+      // 2. Create application (skip if draft already created at Documents step)
+      if (!draftApplicationId) {
+        await createApplication(token, {
+          university_id: form.institution_id,
+          course_id: form.course_id,
+          campus: form.campus || undefined,
+          application_type: form.appType,
+          study_location: form.studyLocation,
+          student_type: form.studentType,
+          enrolment_type: form.enrolType,
+          commence_month: form.commenceMonth || undefined,
+          commence_year: form.commenceYear || undefined,
+        });
+      }
+
+      setForm((f) => ({ ...f, submitted: true }));
+      try { localStorage.removeItem(DRAFT_KEY); } catch {}
+    } catch (err: any) {
+      setSubmitError(err.message || "Submission failed");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   /* ── Review data for step 8 ────────────────────────────────────── */
   const reviewGroups = [
@@ -267,8 +430,23 @@ function ApplyPageInner() {
             {step === 4 && <EmergencyStep form={form} set={set} />}
             {step === 5 && <EducationStep form={form} set={set} />}
             {step === 6 && <WorkStep form={form} set={set} />}
-            {step === 7 && <DocumentsStep uploadedDocs={uploadedDocs} toggleDoc={toggleDoc} />}
-            {step === 8 && <ReviewStep form={form} reviewGroups={reviewGroups} setForm={setForm} />}
+            {step === 7 && (
+              <DocumentsStep
+                uploadedDocs={uploadedDocs}
+                toggleDoc={toggleDoc}
+                applicationId={draftApplicationId || undefined}
+              />
+            )}
+            {step === 8 && (
+              <ReviewStep
+                form={form}
+                reviewGroups={reviewGroups}
+                setForm={setForm}
+                onSubmit={handleSubmit}
+                submitting={submitting}
+                submitError={submitError}
+              />
+            )}
           </div>
 
           {/* ── Nav buttons ───────────────────────────────────────── */}

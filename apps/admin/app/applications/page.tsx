@@ -1,16 +1,66 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Filter } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Filter } from "lucide-react";
 import { filterBtnStyle } from "@/components/ui";
-import { kanbanData } from "./_data/constants";
+import { applicationsApi, AdminApplication } from "@/lib/api";
+import { AppCard, STAGE_ORDER, STATUS_PROGRESS } from "./_data/constants";
 import { BoardView } from "./_components/board-view";
 import { TableView } from "./_components/table-view";
+import { ApplicationDrawer } from "./_components/application-drawer";
+
+function mapToCard(app: AdminApplication): AppCard {
+  const name = `${app.student?.user?.first_name ?? ""} ${app.student?.user?.last_name ?? ""}`.trim() || "Unknown";
+  const intake = [app.commence_month, app.commence_year].filter(Boolean).join(" ");
+  return {
+    id: app.id,
+    name,
+    uni: app.university?.name ?? "—",
+    country: app.university?.country?.name ?? "—",
+    intake,
+    progress: STATUS_PROGRESS[app.status] ?? 0,
+    docsUploaded: app.documents?.length ?? 0,
+    status: app.status,
+  };
+}
+
+function buildColumns(apps: AdminApplication[]) {
+  const grouped: Record<string, AppCard[]> = {};
+  for (const app of apps) {
+    const s = app.status;
+    if (!grouped[s]) grouped[s] = [];
+    grouped[s].push(mapToCard(app));
+  }
+
+  // Only show stages that have cards, ordered by STAGE_ORDER
+  return STAGE_ORDER
+    .filter((s) => grouped[s] && grouped[s].length > 0)
+    .map((s) => ({ stage: s, cards: grouped[s] }));
+}
 
 export default function ApplicationsPage() {
-  const [viewMode, setViewMode] = useState<"board" | "table">("board");
+  const [viewMode, setViewMode] = useState<"board" | "table">("table");
+  const [applications, setApplications] = useState<AdminApplication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const totalCards = kanbanData.reduce((sum, col) => sum + col.cards.length, 0);
+  async function handleStatusChange(id: string, status: string) {
+    await applicationsApi.changeStatus(id, status);
+    // Refresh list to reflect new status
+    const updated = await applicationsApi.listAll();
+    setApplications(updated);
+  }
+
+  useEffect(() => {
+    applicationsApi.listAll()
+      .then(setApplications)
+      .catch((err) => setError(err.message || "Failed to load applications"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const columns = buildColumns(applications);
+  const totalCards = applications.length;
 
   return (
     <div className="flex flex-col h-full" style={{ animation: "fadeUp 0.3s ease" }}>
@@ -21,7 +71,7 @@ export default function ApplicationsPage() {
               Applications
             </h1>
             <span style={{ fontSize: "13px", color: "var(--c-text-4)" }}>
-              {totalCards} active &middot; drag cards to move stage
+              {loading ? "Loading…" : error ? "Error" : `${totalCards} total`}
             </span>
           </div>
           <div className="flex flex-wrap items-center" style={{ gap: "8px" }}>
@@ -57,29 +107,48 @@ export default function ApplicationsPage() {
               <Filter width={13} height={13} stroke="currentColor" strokeWidth={1.8} />
               Filter
             </button>
-            <button
-              className="flex items-center cursor-pointer"
-              style={{
-                height: "34px",
-                gap: "7px",
-                padding: "0 13px",
-                background: "#2563eb",
-                color: "#fff",
-                border: "none",
-                borderRadius: "9px",
-                fontSize: "12.5px",
-                fontWeight: 550,
-                boxShadow: "0 1px 2px rgba(37,99,235,0.25)",
-              }}
-            >
-              <Plus width={15} height={15} stroke="#fff" strokeWidth={2.4} />
-              New application
-            </button>
           </div>
         </div>
       </div>
 
-      {viewMode === "board" ? <BoardView /> : <TableView />}
+      {loading && (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--c-text-4)", fontSize: "14px" }}>
+          Loading applications…
+        </div>
+      )}
+
+      {error && (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#dc2626", fontSize: "14px" }}>
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && (
+        viewMode === "board"
+          ? <BoardView columns={columns} onCardClick={setSelectedId} />
+          : <TableView columns={columns} onCardClick={setSelectedId} onStatusChange={handleStatusChange} />
+      )}
+
+      <ApplicationDrawer applicationId={selectedId} onClose={() => setSelectedId(null)} />
+
+      {!loading && !error && applications.length === 0 && (
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "12px",
+          pointerEvents: "none",
+        }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--c-text-4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
+          <p style={{ fontSize: "14px", color: "var(--c-text-4)", margin: 0 }}>No applications yet</p>
+        </div>
+      )}
     </div>
   );
 }

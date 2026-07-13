@@ -4,7 +4,9 @@ import React from "react";
 
 export const INITIAL_FORM = {
   institution: "",
+  institution_id: "",
   course: "",
+  course_id: "",
   campus: "",
   appType: "New application",
   commenceMonth: "",

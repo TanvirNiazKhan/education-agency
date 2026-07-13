@@ -52,9 +52,13 @@ export function ProgramStep({
               onChange={(v) => {
                 set("institution")(v);
                 set("course")("");
+                set("course_id")("");
                 set("campus")("");
                 const uni = universities.find((u) => u.name === v);
-                if (uni) loadCoursesForUni(uni.id);
+                if (uni) {
+                  set("institution_id")(uni.id);
+                  loadCoursesForUni(uni.id);
+                }
               }}
               options={universities.map((u) => u.name)}
             />
@@ -67,7 +71,10 @@ export function ProgramStep({
             onChange={(v) => {
               set("course")(v);
               const c = courses.find((c) => c.name === v);
-              if (c?.faculty) set("campus")(c.faculty.name);
+              if (c) {
+                set("course_id")(c.id);
+                if (c.faculty) set("campus")(c.faculty.name);
+              }
             }}
             options={courses.map((c) => c.name)}
           />

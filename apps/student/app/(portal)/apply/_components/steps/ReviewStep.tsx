@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { FormState } from "../types";
 
 interface ReviewGroup {
@@ -11,9 +12,13 @@ interface ReviewStepProps {
   form: FormState;
   reviewGroups: ReviewGroup[];
   setForm: React.Dispatch<React.SetStateAction<FormState>>;
+  onSubmit: () => Promise<void>;
+  submitting: boolean;
+  submitError: string;
 }
 
-export function ReviewStep({ form, reviewGroups, setForm }: ReviewStepProps) {
+export function ReviewStep({ form, reviewGroups, setForm, onSubmit, submitting, submitError }: ReviewStepProps) {
+  const router = useRouter();
   return (
     <div>
       {!form.submitted ? (
@@ -126,9 +131,28 @@ export function ReviewStep({ form, reviewGroups, setForm }: ReviewStepProps) {
             </p>
           </div>
 
+          {/* Error */}
+          {submitError && (
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: 10,
+                background: "#fef2f2",
+                border: "1px solid #fecaca",
+                color: "#e0492e",
+                fontSize: 14,
+                fontWeight: 500,
+                marginBottom: 16,
+              }}
+            >
+              {submitError}
+            </div>
+          )}
+
           {/* Submit button */}
           <button
-            onClick={() => setForm((f) => ({ ...f, submitted: true }))}
+            onClick={onSubmit}
+            disabled={submitting}
             style={{
               fontSize: 16,
               fontWeight: 800,
@@ -137,11 +161,12 @@ export function ReviewStep({ form, reviewGroups, setForm }: ReviewStepProps) {
               border: "none",
               borderRadius: 14,
               padding: "16px 48px",
-              cursor: "pointer",
+              cursor: submitting ? "not-allowed" : "pointer",
+              opacity: submitting ? 0.7 : 1,
               width: "100%",
             }}
           >
-            Submit application
+            {submitting ? "Submitting..." : "Submit application"}
           </button>
         </>
       ) : (
@@ -195,9 +220,8 @@ export function ReviewStep({ form, reviewGroups, setForm }: ReviewStepProps) {
             successfully. Our counsellors will review it and get back to you shortly.
           </p>
           <button
-            onClick={() => {
-              /* navigate to dashboard */
-            }}
+            onClick={() => router.push("/dashboard")}
+
             style={{
               fontSize: 15,
               fontWeight: 700,
