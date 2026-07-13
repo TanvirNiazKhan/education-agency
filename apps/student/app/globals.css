@@ -33,6 +33,8 @@
   --header-bg: rgba(255,255,255,.82);
   --danger-bg-hover: #fef2f2;
   --scrollbar-thumb: #d6dbe6;
+  --green-line: #cdeed8;
+  --green-grad-end: #f2fbf5;
 }
 
 .dark {
@@ -62,6 +64,8 @@
   --header-bg: rgba(15,17,23,.82);
   --danger-bg-hover: #2a1618;
   --scrollbar-thumb: #333846;
+  --green-line: #1e4230;
+  --green-grad-end: #101d16;
 
   color-scheme: dark;
 }
