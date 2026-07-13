@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, ILike, Repository } from 'typeorm';
 import { Application, ApplicationStatus } from '../entities/application.entity';
 import { ApplicationStatusHistory } from '../entities/application-status-history.entity';
 
@@ -21,8 +21,19 @@ export class ApplicationRepository {
     });
   }
 
-  async findAll(): Promise<Application[]> {
+  async findAll(search?: string): Promise<Application[]> {
+    let where: FindOptionsWhere<Application>[] | undefined;
+    if (search) {
+      const q = ILike(`%${search}%`);
+      where = [
+        { student: { user: { first_name: q } } },
+        { student: { user: { last_name: q } } },
+        { university: { name: q } },
+        { course: { name: q } },
+      ];
+    }
     return this.applications.find({
+      where,
       relations: {
         university: { country: true },
         course: true,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Avatar, avatarColors, ProgressBar } from "@/components/ui";
 import { stageColors, STATUS_LABELS, STAGE_ORDER, AppCard } from "../_data/constants";
 
@@ -13,11 +14,13 @@ interface TableViewProps {
 function StatusDropdown({
   cardId,
   current,
+  anchor,
   onChange,
   onClose,
 }: {
   cardId: string;
   current: string;
+  anchor: { top: number; left: number };
   onChange: (id: string, status: string) => Promise<void>;
   onClose: () => void;
 }) {
@@ -33,9 +36,14 @@ function StatusDropdown({
     }
     document.addEventListener("mousedown", handler);
     document.addEventListener("keydown", keyHandler);
+    // Fixed positioning goes stale on scroll/resize — close instead of drifting
+    window.addEventListener("scroll", onClose, true);
+    window.addEventListener("resize", onClose);
     return () => {
       document.removeEventListener("mousedown", handler);
       document.removeEventListener("keydown", keyHandler);
+      window.removeEventListener("scroll", onClose, true);
+      window.removeEventListener("resize", onClose);
     };
   }, [onClose]);
 
@@ -50,14 +58,14 @@ function StatusDropdown({
     }
   }
 
-  return (
+  return createPortal(
     <div
       ref={ref}
       style={{
-        position: "absolute",
-        top: "calc(100% + 6px)",
-        left: 0,
-        zIndex: 50,
+        position: "fixed",
+        top: anchor.top,
+        left: anchor.left,
+        zIndex: 100,
         background: "var(--c-bg-elevated)",
         border: "1px solid var(--c-border)",
         borderRadius: "11px",
@@ -108,12 +116,13 @@ function StatusDropdown({
           </div>
         );
       })}
-    </div>
+    </div>,
+    document.body,
   );
 }
 
 export function TableView({ columns, onCardClick, onStatusChange }: TableViewProps) {
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<{ id: string; top: number; left: number } | null>(null);
 
   const allCards = columns.flatMap((col) =>
     col.cards.map((c) => ({ ...c, stage: col.stage }))
@@ -202,7 +211,16 @@ export function TableView({ columns, onCardClick, onStatusChange }: TableViewPro
                 {/* Status — clickable, stops row click propagation */}
                 <div style={{ position: "relative" }} onClick={(e) => e.stopPropagation()}>
                   <button
-                    onClick={() => setOpenDropdown(openDropdown === c.id ? null : c.id)}
+                    onClick={(e) => {
+                      if (openDropdown?.id === c.id) { setOpenDropdown(null); return; }
+                      const r = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+                      // Flip above button if dropdown would overflow viewport bottom
+                      const dropdownHeight = STAGE_ORDER.length * 34 + 10;
+                      const top = r.bottom + 6 + dropdownHeight > window.innerHeight
+                        ? r.top - 6 - dropdownHeight
+                        : r.bottom + 6;
+                      setOpenDropdown({ id: c.id, top, left: r.left });
+                    }}
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
@@ -225,10 +243,11 @@ export function TableView({ columns, onCardClick, onStatusChange }: TableViewPro
                     </svg>
                   </button>
 
-                  {openDropdown === c.id && (
+                  {openDropdown?.id === c.id && (
                     <StatusDropdown
                       cardId={c.id}
                       current={c.stage}
+                      anchor={{ top: openDropdown.top, left: openDropdown.left }}
                       onChange={onStatusChange}
                       onClose={() => setOpenDropdown(null)}
                     />

@@ -182,6 +182,7 @@ export default function CoursesPage() {
   }
 
   function getFacultyName(id: string) { return faculties.find((f) => f.id === id)?.name || "—"; }
+  function getFacultyUniversityName(id: string) { return faculties.find((f) => f.id === id)?.university?.name || ""; }
   function getDegreeName(id: string) { return degrees.find((d) => d.id === id)?.name || "—"; }
 
   const canSave = form.name && form.course_code && form.tuition_fee && form.faculty_id && form.degree_id && form.duration_months;
@@ -289,6 +290,11 @@ export default function CoursesPage() {
                       <span style={{ fontSize: "11.5px", fontWeight: 600, color: "var(--c-chip-info-text)", background: "var(--c-chip-info-bg)", padding: "3px 10px", borderRadius: "20px" }}>
                         {c.faculty?.name || getFacultyName(c.faculty_id)}
                       </span>
+                      {(c.faculty?.university?.name || getFacultyUniversityName(c.faculty_id)) && (
+                        <div style={{ fontSize: "11px", color: "var(--c-text-4)", marginTop: "4px" }}>
+                          {c.faculty?.university?.name || getFacultyUniversityName(c.faculty_id)}
+                        </div>
+                      )}
                     </td>
                     <td style={{ padding: "12px 16px" }}>
                       <span style={{ fontSize: "11.5px", fontWeight: 600, color: "var(--c-chip-ai-text)", background: "var(--c-chip-ai-bg)", padding: "3px 10px", borderRadius: "20px" }}>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Filter } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Filter, Search } from "lucide-react";
 import { filterBtnStyle } from "@/components/ui";
 import { applicationsApi, AdminApplication } from "@/lib/api";
 import { AppCard, STAGE_ORDER, STATUS_PROGRESS } from "./_data/constants";
@@ -44,20 +44,30 @@ export default function ApplicationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const hasLoadedRef = useRef(false);
 
   async function handleStatusChange(id: string, status: string) {
     await applicationsApi.changeStatus(id, status);
     // Refresh list to reflect new status
-    const updated = await applicationsApi.listAll();
+    const updated = await applicationsApi.listAll(debouncedSearch || undefined);
     setApplications(updated);
   }
 
+  /* Debounce search input */
   useEffect(() => {
-    applicationsApi.listAll()
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => {
+    if (!hasLoadedRef.current) setLoading(true);
+    applicationsApi.listAll(debouncedSearch || undefined)
       .then(setApplications)
       .catch((err) => setError(err.message || "Failed to load applications"))
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => { hasLoadedRef.current = true; setLoading(false); });
+  }, [debouncedSearch]);
 
   const columns = buildColumns(applications);
   const totalCards = applications.length;
@@ -75,6 +85,18 @@ export default function ApplicationsPage() {
             </span>
           </div>
           <div className="flex flex-wrap items-center" style={{ gap: "8px" }}>
+            {/* Search */}
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-[10px] top-1/2 -translate-y-1/2" width={14} height={14} stroke="var(--c-text-4)" strokeWidth={2} />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search applications…"
+                className="outline-none"
+                style={{ height: "34px", width: "200px", padding: "0 10px 0 30px", border: "1px solid var(--c-border-input)", borderRadius: "9px", background: "var(--c-bg-elevated)", fontSize: "12.5px", color: "var(--c-text-1)" }}
+              />
+            </div>
             <div className="flex" style={{ background: "var(--c-bg-surface)", borderRadius: "9px", padding: "3px" }}>
               {(["board", "table"] as const).map((mode) => (
                 <button
@@ -146,7 +168,9 @@ export default function ApplicationsPage() {
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
             <polyline points="14 2 14 8 20 8" />
           </svg>
-          <p style={{ fontSize: "14px", color: "var(--c-text-4)", margin: 0 }}>No applications yet</p>
+          <p style={{ fontSize: "14px", color: "var(--c-text-4)", margin: 0 }}>
+            {debouncedSearch ? "No applications match your search" : "No applications yet"}
+          </p>
         </div>
       )}
     </div>

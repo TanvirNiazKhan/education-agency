@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Pencil, Trash2, X, Loader2, MapPin, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Loader2, MapPin, ChevronRight, Search } from "lucide-react";
 import { countriesApi, citiesApi, type Country, type City } from "@/lib/api";
 
 /* ─── Styles ─── */
@@ -45,6 +45,9 @@ export default function CountriesPage() {
   const [countryForm, setCountryForm] = useState<CountryForm>(emptyCountryForm);
   const [countrySaving, setCountrySaving] = useState(false);
 
+  /* Search */
+  const [search, setSearch] = useState("");
+
   /* Selection */
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -84,6 +87,14 @@ export default function CountriesPage() {
   }, [selectedId, loadCities]);
 
   const selectedCountry = countries.find((c) => c.id === selectedId) ?? null;
+
+  const q = search.trim().toLowerCase();
+  const visibleCountries = q
+    ? countries.filter((c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.iso_code.toLowerCase().includes(q) ||
+        (c.currency || "").toLowerCase().includes(q))
+    : countries;
 
   /* ─── Country CRUD ─── */
   function openCreateCountry() {
@@ -171,10 +182,24 @@ export default function CountriesPage() {
           <h1 style={{ margin: 0, fontSize: "20px", fontWeight: 600, letterSpacing: "-0.025em", color: "var(--c-text-1)" }}>Countries</h1>
           <p style={{ margin: "5px 0 0", fontSize: "13px", color: "var(--c-text-3)" }}>Manage destination countries and their cities</p>
         </div>
-        <button onClick={openCreateCountry} className="flex items-center cursor-pointer"
-          style={{ height: "34px", gap: "6px", padding: "0 13px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "9px", fontSize: "12.5px", fontWeight: 550, boxShadow: "0 1px 2px rgba(37,99,235,0.25)" }}>
-          <Plus width={15} height={15} stroke="#fff" strokeWidth={2.4} />Add country
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Search */}
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-[10px] top-1/2 -translate-y-1/2" width={14} height={14} stroke="var(--c-text-4)" strokeWidth={2} />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search countries…"
+              className="outline-none"
+              style={{ height: "34px", width: "200px", padding: "0 10px 0 30px", border: "1px solid var(--c-border-input)", borderRadius: "9px", background: "var(--c-bg-elevated)", fontSize: "12.5px", color: "var(--c-text-1)" }}
+            />
+          </div>
+          <button onClick={openCreateCountry} className="flex items-center cursor-pointer"
+            style={{ height: "34px", gap: "6px", padding: "0 13px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "9px", fontSize: "12.5px", fontWeight: 550, boxShadow: "0 1px 2px rgba(37,99,235,0.25)" }}>
+            <Plus width={15} height={15} stroke="#fff" strokeWidth={2.4} />Add country
+          </button>
+        </div>
       </div>
 
       {/* Error */}
@@ -189,16 +214,16 @@ export default function CountriesPage() {
         <div className="flex items-center justify-center" style={{ padding: "60px 0", color: "var(--c-text-4)" }}>
           <Loader2 width={24} height={24} className="animate-spin" />
         </div>
-      ) : countries.length === 0 ? (
+      ) : visibleCountries.length === 0 ? (
         <div style={{ textAlign: "center", padding: "60px 0", color: "var(--c-text-4)", fontSize: "14px" }}>
-          No countries yet. Add your first country to get started.
+          {q ? "No countries match your search." : "No countries yet. Add your first country to get started."}
         </div>
       ) : (
         <div className="flex gap-5 items-start">
           {/* ── LEFT: Country cards ── */}
           <div className="flex-1" style={{ minWidth: 0 }}>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-              {countries.map((c, i) => {
+              {visibleCountries.map((c, i) => {
                 const isSelected = c.id === selectedId;
                 return (
                   <div key={c.id}

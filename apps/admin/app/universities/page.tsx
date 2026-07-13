@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Plus, Pencil, Trash2, X, Loader2, ChevronDown, Check,
-  Globe, Star, FlaskConical, BookOpen, ChevronRight, ImageIcon, Upload, GraduationCap, CalendarDays,
+  Globe, Star, FlaskConical, BookOpen, ChevronRight, ImageIcon, Upload, GraduationCap, CalendarDays, Search,
 } from "lucide-react";
 import {
   universitiesApi, countriesApi, citiesApi, facultiesApi, coursesApi, degreesApi, universityImagesApi, scholarshipsApi, intakesApi,
@@ -137,6 +137,9 @@ export default function UniversitiesPage() {
   const [loading, setLoading] = useState(true);
   const [filterCountry, setFilterCountry] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const hasLoadedRef = useRef(false);
 
   /* Selection & tabs */
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -191,9 +194,9 @@ export default function UniversitiesPage() {
   /* ─── Loaders ─── */
   const loadUniversities = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!hasLoadedRef.current) setLoading(true);
       const [uniData, countryData, cityData, degreeData] = await Promise.all([
-        universitiesApi.list(filterCountry || undefined),
+        universitiesApi.list(filterCountry || undefined, debouncedSearch || undefined),
         countriesApi.list(),
         citiesApi.list(),
         degreesApi.list(),
@@ -204,8 +207,14 @@ export default function UniversitiesPage() {
       setDegrees(degreeData);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load");
-    } finally { setLoading(false); }
-  }, [filterCountry]);
+    } finally { hasLoadedRef.current = true; setLoading(false); }
+  }, [filterCountry, debouncedSearch]);
+
+  /* Debounce search input */
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const loadFacultiesAndCourses = useCallback(async (uniId: string) => {
     setFacLoading(true);
@@ -495,6 +504,13 @@ export default function UniversitiesPage() {
       setError(e instanceof Error ? e.message : "Failed to save");
     } finally { setIntSaving(false); }
   }
+  async function handleIntToggleStatus(i: Intake) {
+    const next = i.status === "open" ? "closed" : "open";
+    try {
+      await intakesApi.update(i.id, { status: next });
+      if (selectedId) await loadIntakes(selectedId);
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : "Failed to update intake status"); }
+  }
   async function handleIntDelete(id: string) {
     if (!confirm("Delete this intake?")) return;
     try {
@@ -580,6 +596,18 @@ export default function UniversitiesPage() {
           <p style={{ margin: "5px 0 0", fontSize: "13px", color: "var(--c-text-3)" }}>Manage partner universities, faculties and courses</p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Search */}
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-[10px] top-1/2 -translate-y-1/2" width={14} height={14} stroke="var(--c-text-4)" strokeWidth={2} />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search universities…"
+              className="outline-none"
+              style={{ height: "34px", width: "200px", padding: "0 10px 0 30px", border: "1px solid var(--c-border-input)", borderRadius: "9px", background: "var(--c-bg-elevated)", fontSize: "12.5px", color: "var(--c-text-1)" }}
+            />
+          </div>
           {/* Country filter */}
           <div className="relative">
             <button onClick={() => setFilterOpen(!filterOpen)} className="flex items-center cursor-pointer hoverable"
@@ -633,7 +661,7 @@ export default function UniversitiesPage() {
           <div className={`w-full lg:w-[272px] ${selectedId ? "hidden lg:block" : ""}`} style={{ flexShrink: 0 }}>
             {universities.length === 0 ? (
               <div style={{ textAlign: "center", padding: "40px 0", color: "var(--c-text-4)", fontSize: "13px" }}>
-                No universities yet.<br />Add your first one.
+                {debouncedSearch || filterCountry ? <>No universities match your search.</> : <>No universities yet.<br />Add your first one.</>}
               </div>
             ) : (
               <div style={{ border: "1px solid var(--c-border)", borderRadius: "12px", overflow: "hidden" }}>
@@ -987,7 +1015,15 @@ export default function UniversitiesPage() {
                                   {i.deadline && <span>Deadline: {i.deadline}</span>}
                                 </div>
                               </div>
-                              <div className="flex gap-1 opacity-0 group-hover:opacity-100" style={{ transition: "opacity 0.15s", flexShrink: 0 }}>
+                              <div className="flex gap-1 items-center" style={{ flexShrink: 0 }}>
+                                <button onClick={() => handleIntToggleStatus(i)} className="cursor-pointer"
+                                  style={{ height: "26px", padding: "0 10px", fontSize: "11.5px", fontWeight: 600, borderRadius: "6px",
+                                    background: i.status === "open" ? "#fee2e2" : "#dcfce7",
+                                    color: i.status === "open" ? "#991b1b" : "#166534",
+                                    border: `1px solid ${i.status === "open" ? "#fecaca" : "#bbf7d0"}` }}>
+                                  {i.status === "open" ? "Close" : "Open"}
+                                </button>
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100" style={{ transition: "opacity 0.15s" }}>
                                 <button onClick={() => openEditInt(i)} className="cursor-pointer"
                                   style={{ width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "1px solid var(--c-border)", borderRadius: "6px" }}>
                                   <Pencil width={12} height={12} stroke="var(--c-text-3)" strokeWidth={2} />
@@ -996,6 +1032,7 @@ export default function UniversitiesPage() {
                                   style={{ width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "1px solid #fecaca", borderRadius: "6px" }}>
                                   <Trash2 width={12} height={12} stroke="#dc2626" strokeWidth={2} />
                                 </button>
+                                </div>
                               </div>
                             </div>
                           ))}

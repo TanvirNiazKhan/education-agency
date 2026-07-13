@@ -470,7 +470,8 @@ export const APPLICATION_STATUSES = [
 ] as const;
 
 export const applicationsApi = {
-  listAll: () => api.get<AdminApplication[]>('/admin/applications'),
+  listAll: (search?: string) =>
+    api.get<AdminApplication[]>(`/admin/applications${search ? `?q=${encodeURIComponent(search)}` : ''}`),
   getById: (id: string) => api.get<AdminApplication>(`/admin/applications/${id}`),
   update: (id: string, data: UpdateApplicationData) =>
     api.patch<AdminApplication>(`/admin/applications/${id}`, data),

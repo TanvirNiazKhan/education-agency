@@ -112,8 +112,8 @@ export class ApplicationsService {
     return this.applicationRepository.getDashboardStats();
   }
 
-  async getAllApplications() {
-    return this.applicationRepository.findAll();
+  async getAllApplications(search?: string) {
+    return this.applicationRepository.findAll(search);
   }
 
   async getByIdAdmin(id: string) {

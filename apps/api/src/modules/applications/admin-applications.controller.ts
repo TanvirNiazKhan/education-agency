@@ -3,6 +3,7 @@ import {
   Get,
   Patch,
   Param,
+  Query,
   Body,
   ParseUUIDPipe,
   Res,
@@ -38,8 +39,8 @@ export class AdminApplicationsController {
   }
 
   @Get()
-  async getAllApplications() {
-    return this.applicationsService.getAllApplications();
+  async getAllApplications(@Query('q') search?: string) {
+    return this.applicationsService.getAllApplications(search);
   }
 
   @Get(':id')

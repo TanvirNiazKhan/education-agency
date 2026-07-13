@@ -23,17 +23,13 @@ import {
 } from "lucide-react";
 import { currentUser } from "../lib/mock-data";
 import { useSidebar } from "../lib/sidebar";
-import { useEffect } from "react";
+import { dashboardApi } from "../lib/api";
+import { useEffect, useState } from "react";
 
 const mainNavItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { label: "Students", href: "/students", icon: Users, count: "2,847" },
-  {
-    label: "Applications",
-    href: "/applications",
-    icon: BarChart3,
-    count: "1,204",
-  },
+  { label: "Students", href: "/students", icon: Users },
+  { label: "Applications", href: "/applications", icon: BarChart3 },
   { label: "Universities", href: "/universities", icon: GraduationCap },
   { label: "Courses", href: "/courses", icon: BookOpen },
 
@@ -143,11 +139,22 @@ function NavItem({
 export function Sidebar() {
   const pathname = usePathname();
   const { open, close } = useSidebar();
+  const [counts, setCounts] = useState<Record<string, string>>({});
 
   // Close sidebar on route change
   useEffect(() => {
     close();
   }, [pathname, close]);
+
+  // Sync nav counts on route change
+  useEffect(() => {
+    dashboardApi.stats()
+      .then((s) => setCounts({
+        "/students": s.totalStudents.toLocaleString(),
+        "/applications": s.totalApplications.toLocaleString(),
+      }))
+      .catch(() => {});
+  }, [pathname]);
 
   function isActive(href: string) {
     return href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -233,7 +240,7 @@ export function Sidebar() {
         {/* Main nav */}
         <nav className="flex flex-col flex-1 gap-[4px] md:gap-[1px]" style={{ marginTop: "2px" }}>
           {mainNavItems.map((item) => (
-            <NavItem key={item.href} item={item} isActive={isActive(item.href)} onClick={close} />
+            <NavItem key={item.href} item={{ ...item, count: counts[item.href] }} isActive={isActive(item.href)} onClick={close} />
           ))}
 
           {/* Separator */}
