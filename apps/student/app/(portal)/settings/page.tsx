@@ -18,6 +18,7 @@ export default function SettingsPage() {
   // Avatar
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState("");
+  const [avatarSuccess, setAvatarSuccess] = useState(false);
 
   // Password
   const [currentPassword, setCurrentPassword] = useState("");
@@ -35,9 +36,11 @@ export default function SettingsPage() {
     if (!file || !token) return;
     setAvatarUploading(true);
     setAvatarError("");
+    setAvatarSuccess(false);
     try {
       const result = await uploadAvatar(token, file);
       updateUser({ avatar_url: result.avatar_url });
+      setAvatarSuccess(true);
     } catch (err: any) {
       setAvatarError(err.message || "Upload failed");
     } finally {
@@ -70,11 +73,11 @@ export default function SettingsPage() {
   const avatarUrl = avatarSrc(user?.avatar_url);
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: "32px 16px 60px" }}>
-      <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--color-navy)", margin: "0 0 8px" }}>
+    <div style={{ maxWidth: 600, margin: "0 auto", padding: "32px 16px 60px" }}>
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--color-navy)", margin: "0 0 6px" }}>
         Account Settings
       </h1>
-      <p style={{ fontSize: 14, color: "var(--color-sub)", margin: "0 0 32px" }}>
+      <p style={{ fontSize: 14, color: "var(--color-sub)", margin: "0 0 28px" }}>
         Manage your profile photo and security settings.
       </p>
 
@@ -88,7 +91,7 @@ export default function SettingsPage() {
           marginBottom: 20,
         }}
       >
-        <div style={{ fontSize: 15, fontWeight: 800, color: "var(--color-navy)", marginBottom: 18 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--color-navy)", marginBottom: 20 }}>
           Profile Photo
         </div>
 
@@ -119,10 +122,10 @@ export default function SettingsPage() {
           </div>
 
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--color-ink)", marginBottom: 4 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--color-ink)", marginBottom: 2 }}>
               {user?.first_name} {user?.last_name}
             </div>
-            <div style={{ fontSize: 13, color: "var(--color-muted)", marginBottom: 12 }}>
+            <div style={{ fontSize: 13, color: "var(--color-muted)", marginBottom: 14 }}>
               {user?.email}
             </div>
             <label
@@ -158,6 +161,9 @@ export default function SettingsPage() {
             {avatarError && (
               <div style={{ fontSize: 12, color: "var(--color-red)", marginTop: 6 }}>{avatarError}</div>
             )}
+            {avatarSuccess && (
+              <div style={{ fontSize: 12, color: "#15803d", marginTop: 6 }}>Photo updated.</div>
+            )}
             <div style={{ fontSize: 11.5, color: "var(--color-muted)", marginTop: 6 }}>
               JPEG, PNG or WebP · max 5 MB
             </div>
@@ -174,12 +180,11 @@ export default function SettingsPage() {
           padding: "24px",
         }}
       >
-        <div style={{ fontSize: 15, fontWeight: 800, color: "var(--color-navy)", marginBottom: 18 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--color-navy)", marginBottom: 20 }}>
           Change Password
         </div>
 
-        <form onSubmit={handlePasswordSave} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {/* Current password */}
+        <form onSubmit={handlePasswordSave} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <PasswordField
             label="Current Password"
             value={currentPassword}
@@ -190,7 +195,6 @@ export default function SettingsPage() {
 
           <div style={{ height: 1, background: "var(--color-line)" }} />
 
-          {/* New password */}
           <PasswordField
             label="New Password"
             value={newPassword}
@@ -200,7 +204,6 @@ export default function SettingsPage() {
             hint="At least 8 characters"
           />
 
-          {/* Confirm password */}
           <PasswordField
             label="Confirm New Password"
             value={confirmPassword}
