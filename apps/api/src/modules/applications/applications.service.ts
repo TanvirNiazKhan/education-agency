@@ -5,10 +5,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { unlink, rename, mkdir } from 'fs/promises';
-import { join, dirname } from 'path';
+import { extname } from 'path';
+import { v4 as uuid } from 'uuid';
 import { ApplicationRepository } from './repositories/application.repository';
 import { StudentsService } from '@modules/students/students.service';
+import { StorageService } from '@modules/storage/storage.service';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationAdminDto, ChangeStatusDto } from './dto/update-application.dto';
 import { ApplicationDocument } from './entities/application-document.entity';
@@ -18,6 +19,7 @@ export class ApplicationsService {
   constructor(
     private readonly applicationRepository: ApplicationRepository,
     private readonly studentsService: StudentsService,
+    private readonly storageService: StorageService,
     @InjectRepository(ApplicationDocument)
     private readonly documentRepo: Repository<ApplicationDocument>,
   ) {}
@@ -61,22 +63,11 @@ export class ApplicationsService {
     const application = await this.getById(applicationId, userId);
     const studentId = application.student_id;
 
-    // Move file from temp location to student-scoped folder
-    const finalDir = join(
-      process.cwd(),
-      'uploads',
-      'students',
-      studentId,
-      'applications',
-      applicationId,
-      docType,
-    );
-    await mkdir(finalDir, { recursive: true });
+    const ext = extname(file.originalname);
+    const filename = `${docType}_${uuid()}${ext}`;
+    const key = `students/${studentId}/applications/${applicationId}/${docType}/${filename}`;
 
-    const finalPath = join(finalDir, file.filename);
-    await rename(file.path, finalPath);
-
-    const fileUrl = `/uploads/students/${studentId}/applications/${applicationId}/${docType}/${file.filename}`;
+    const fileUrl = await this.storageService.upload(key, file.buffer, file.mimetype);
 
     const doc = this.documentRepo.create({
       application_id: applicationId,
@@ -100,13 +91,9 @@ export class ApplicationsService {
     });
     if (!doc) throw new NotFoundException('Document not found');
 
-    // Delete file from disk
-    try {
-      const filePath = join(process.cwd(), doc.file_url);
-      await unlink(filePath);
-    } catch {
-      // File may already be gone — continue
-    }
+    // Extract storage key from URL
+    const key = this.extractKeyFromUrl(doc.file_url);
+    await this.storageService.delete(key);
 
     await this.documentRepo.delete(docId);
   }
@@ -137,5 +124,21 @@ export class ApplicationsService {
     if (!application) throw new NotFoundException('Application not found');
     if (application.status === dto.status) return application;
     return this.applicationRepository.changeStatus(id, application.status, dto.status, dto.comment);
+  }
+
+  private extractKeyFromUrl(fileUrl: string): string {
+    // For local URLs like "/uploads/students/..." strip the "/uploads/" prefix
+    if (fileUrl.startsWith('/uploads/')) {
+      return fileUrl.replace('/uploads/', '');
+    }
+    // For S3 URLs, extract path after bucket name
+    // e.g. "https://endpoint/bucket/students/..." -> "students/..."
+    const parts = fileUrl.split('/');
+    // Find "students" or "avatars" segment and take everything from there
+    const startIdx = parts.findIndex((p) => p === 'students' || p === 'avatars');
+    if (startIdx !== -1) {
+      return parts.slice(startIdx).join('/');
+    }
+    return fileUrl;
   }
 }

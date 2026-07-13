@@ -14,10 +14,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
-import { mkdirSync } from 'fs';
-import { v4 as uuid } from 'uuid';
+import { memoryStorage } from 'multer';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { ApplicationsService } from './applications.service';
 import { CreateApplicationDto } from './dto/create-application.dto';
@@ -74,31 +71,7 @@ export class ApplicationsController {
   })
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: (req: any, _file, cb) => {
-          // student_id resolved after upload via service — use application_id from params
-          // We need student_id for folder: retrieve from application in service
-          // For now store in temp location keyed by applicationId + docType
-          const applicationId = req.params.id;
-          const docType = req.body.doc_type || 'misc';
-          // student_id not yet known at multer level — use placeholder, service moves file
-          // Actually: we store directly, service builds correct URL based on student_id
-          const dir = join(
-            process.cwd(),
-            'uploads',
-            'applications',
-            applicationId,
-            docType,
-          );
-          mkdirSync(dir, { recursive: true });
-          cb(null, dir);
-        },
-        filename: (_req, file, cb) => {
-          const docType = (_req as any).body?.doc_type || 'doc';
-          const ext = extname(file.originalname);
-          cb(null, `${docType}_${uuid()}${ext}`);
-        },
-      }),
+      storage: memoryStorage(),
       fileFilter: (_req, file, cb) => {
         if (ALLOWED_MIME.includes(file.mimetype)) {
           cb(null, true);

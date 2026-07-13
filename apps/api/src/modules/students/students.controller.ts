@@ -12,11 +12,11 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
-import { mkdirSync } from 'fs';
+import { memoryStorage } from 'multer';
+import { extname } from 'path';
 import { v4 as uuid } from 'uuid';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { StorageService } from '@modules/storage/storage.service';
 import { StudentsService } from './students.service';
 import { UpsertProfileDto } from './dto/upsert-profile.dto';
 import { UsersService } from '@modules/users/users.service';
@@ -28,6 +28,7 @@ export class StudentsController {
   constructor(
     private readonly studentsService: StudentsService,
     private readonly usersService: UsersService,
+    private readonly storageService: StorageService,
   ) {}
 
   @Get('profile')
@@ -43,17 +44,7 @@ export class StudentsController {
   @Post('avatar')
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: (_req: any, _file, cb) => {
-          const userId = (_req as any).user?.id || 'unknown';
-          const dir = join(process.cwd(), 'uploads', 'avatars', userId);
-          mkdirSync(dir, { recursive: true });
-          cb(null, dir);
-        },
-        filename: (_req, file, cb) => {
-          cb(null, `avatar_${uuid()}${extname(file.originalname)}`);
-        },
-      }),
+      storage: memoryStorage(),
       fileFilter: (_req, file, cb) => {
         if (['image/jpeg', 'image/png', 'image/webp', 'image/jpg'].includes(file.mimetype)) {
           cb(null, true);
@@ -69,7 +60,12 @@ export class StudentsController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) throw new BadRequestException('No file uploaded');
-    const avatarUrl = `/uploads/avatars/${req.user.id}/${file.filename}`;
+
+    const ext = extname(file.originalname);
+    const filename = `avatar_${uuid()}${ext}`;
+    const key = `avatars/${req.user.id}/${filename}`;
+
+    const avatarUrl = await this.storageService.upload(key, file.buffer, file.mimetype);
     await this.usersService.update(req.user.id, { avatar_url: avatarUrl });
     return { avatar_url: avatarUrl };
   }

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { databaseConfig, redisConfig, mailConfig } from './config';
+import { databaseConfig, redisConfig, mailConfig, storageConfig } from './config';
 import { DatabaseModule } from './database/database.module';
 import { CountriesModule } from './modules/countries/countries.module';
 import { CitiesModule } from './modules/cities/cities.module';
@@ -17,13 +17,15 @@ import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { StudentsModule } from './modules/students/students.module';
 import { ApplicationsModule } from './modules/applications/applications.module';
+import { StorageModule } from './modules/storage/storage.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, redisConfig, mailConfig],
+      load: [databaseConfig, redisConfig, mailConfig, storageConfig],
     }),
+    StorageModule,
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
