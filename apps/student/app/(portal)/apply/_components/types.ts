@@ -10,7 +10,7 @@ export const INITIAL_FORM = {
   campus: "",
   appType: "New application",
   commenceMonth: "",
-  commenceYear: "2026",
+  commenceYear: "",
   studyLocation: "Offshore (still in my home country)",
   studentType: "International",
   enrolType: "Full-time",

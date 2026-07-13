@@ -6,10 +6,23 @@ interface ProgressBarProps {
   step: number;
   totalSteps: number;
   progress: number;
-  institutionInitial: string;
+  institution: string;
+  subtitle: string;
+  universityType?: string | null;
+  website?: string | null;
+  logoUrl?: string | null;
 }
 
-export function ProgressBar({ step, totalSteps, progress, institutionInitial }: ProgressBarProps) {
+export function ProgressBar({
+  step,
+  totalSteps,
+  progress,
+  institution,
+  subtitle,
+  universityType,
+  website,
+  logoUrl,
+}: ProgressBarProps) {
   return (
     <div
       style={{
@@ -32,50 +45,147 @@ export function ProgressBar({ step, totalSteps, progress, institutionInitial }: 
           gap: 14,
         }}
       >
-        {/* University badge */}
+        {/* University badge / logo */}
         <div
           style={{
-            width: 38,
-            height: 38,
-            borderRadius: 10,
-            background: "linear-gradient(135deg,#0e7490,#06b6d4)",
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            background: logoUrl ? "#fff" : "linear-gradient(135deg,#0e7490,#06b6d4)",
+            border: logoUrl ? "1px solid var(--color-line)" : "none",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             color: "#fff",
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: 800,
             flexShrink: 0,
+            overflow: "hidden",
           }}
         >
-          {institutionInitial}
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt={institution}
+              style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }}
+            />
+          ) : (
+            institution.charAt(0) || "?"
+          )}
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--color-ink)" }}>
-              Step {step + 1} of {totalSteps} &middot; {JOURNEY_STEPS[step]}
-            </span>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-              <div
+          {/* Row 1: institution info left, step info right */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, flexWrap: "wrap" }}>
+              <span
                 style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  background: "var(--color-green)",
+                  fontSize: 14.5,
+                  fontWeight: 800,
+                  color: "var(--color-navy)",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
-              />
-              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--color-muted)" }}>
-                Auto-saved
+              >
+                {institution || "Choose your institution"}
               </span>
+              {universityType && (
+                <span
+                  style={{
+                    padding: "2px 9px",
+                    borderRadius: 100,
+                    background: "var(--color-blue-x)",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: "var(--color-blue)",
+                    flexShrink: 0,
+                  }}
+                >
+                  {universityType}
+                </span>
+              )}
+              {website && (
+                <a
+                  href={website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden sm:inline-flex"
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "var(--color-blue)",
+                    textDecoration: "none",
+                    flexShrink: 0,
+                  }}
+                >
+                  Website ↗
+                </a>
+              )}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+              <span
+                className="hidden md:inline"
+                style={{ fontSize: 12.5, fontWeight: 700, color: "var(--color-ink)" }}
+              >
+                Step {step + 1} of {totalSteps} &middot; {JOURNEY_STEPS[step]}
+              </span>
+              <span
+                className="md:hidden"
+                style={{ fontSize: 12.5, fontWeight: 700, color: "var(--color-ink)" }}
+              >
+                {step + 1}/{totalSteps}
+              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <div
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    background: "var(--color-green)",
+                  }}
+                />
+                <span
+                  className="hidden sm:inline"
+                  style={{ fontSize: 11.5, fontWeight: 600, color: "var(--color-muted)" }}
+                >
+                  Auto-saved
+                </span>
+              </div>
             </div>
           </div>
+
+          {/* Row 2: subtitle */}
+          {subtitle && (
+            <div
+              style={{
+                fontSize: 12.5,
+                color: "var(--color-sub)",
+                marginTop: 1,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {subtitle}
+            </div>
+          )}
+
+          {/* Row 3: progress bar */}
           <div
             style={{
               height: 6,
               background: "var(--color-line)",
               borderRadius: 3,
-              marginTop: 8,
+              marginTop: 7,
               overflow: "hidden",
             }}
           >

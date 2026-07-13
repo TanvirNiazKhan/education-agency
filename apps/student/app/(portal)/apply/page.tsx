@@ -21,6 +21,33 @@ import { ReviewStep } from "./_components/steps/ReviewStep";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
+export interface UniOption {
+  id: string;
+  name: string;
+  website?: string | null;
+  university_type?: string | null;
+  city?: { name: string };
+  country?: { name: string };
+  images?: { url: string; type: string; sort_order: number; is_active: boolean }[];
+}
+
+const IMG_BASE = API_BASE.replace(/\/api$/, "");
+
+export interface IntakeOption {
+  id: string;
+  name: string;
+  status: string;
+  start_date: string | null;
+  deadline: string | null;
+}
+
+export function getUniLogoUrl(uni?: UniOption): string | null {
+  const logo = (uni?.images ?? [])
+    .filter((img) => img.type === "logo" && img.is_active)
+    .sort((a, b) => a.sort_order - b.sort_order)[0];
+  return logo ? `${IMG_BASE}${logo.url}` : null;
+}
+
 /* ────────────────────────── Main page ────────────────────────────── */
 
 export default function ApplyPage() {
@@ -38,8 +65,9 @@ function ApplyPageInner() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>({ ...INITIAL_FORM });
   const [uploadedDocs, setUploadedDocs] = useState<Set<string>>(new Set());
-  const [universities, setUniversities] = useState<{ id: string; name: string }[]>([]);
+  const [universities, setUniversities] = useState<UniOption[]>([]);
   const [courses, setCourses] = useState<{ id: string; name: string; faculty?: { name: string } }[]>([]);
+  const [intakes, setIntakes] = useState<IntakeOption[]>([]);
   const [presetUniversity, setPresetUniversity] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -80,7 +108,7 @@ function ApplyPageInner() {
 
   // Fetch universities list + pre-fill from query params
   useEffect(() => {
-    fetch(`${API_BASE}/universities`).then((r) => r.json()).then((unis: { id: string; name: string; slug: string }[]) => {
+    fetch(`${API_BASE}/universities`).then((r) => r.json()).then((unis: UniOption[]) => {
       setUniversities(unis);
 
       const uniId = searchParams.get("university_id");
@@ -113,6 +141,11 @@ function ApplyPageInner() {
       );
       Promise.all(fetches).then((results) => setCourses(results.flat()));
     }).catch(() => {});
+    // Fetch university intakes
+    fetch(`${API_BASE}/intakes?university_id=${uniId}`)
+      .then((r) => r.json())
+      .then((its: IntakeOption[]) => setIntakes(Array.isArray(its) ? its : []))
+      .catch(() => setIntakes([]));
   }
 
   const totalSteps = JOURNEY_STEPS.length; // 9
@@ -267,7 +300,7 @@ function ApplyPageInner() {
         { label: "Course", value: form.course },
         { label: "Campus", value: form.campus },
         { label: "Application type", value: form.appType },
-        { label: "Start", value: `${form.commenceMonth} ${form.commenceYear}` },
+        { label: "Intake", value: `${form.commenceMonth} ${form.commenceYear}`.trim() },
         { label: "Study load", value: form.enrolType },
       ],
     },
@@ -343,6 +376,9 @@ function ApplyPageInner() {
 
   /* ───────────────────────── Render ──────────────────────────────── */
 
+  const selectedUni = universities.find((u) => u.id === form.institution_id);
+  const uniLogo = getUniLogoUrl(selectedUni);
+
   return (
     <main>
       {/* ── Progress bar ─────────────────────────────────────────── */}
@@ -350,50 +386,19 @@ function ApplyPageInner() {
         step={step}
         totalSteps={totalSteps}
         progress={progress}
-        institutionInitial={form.institution.charAt(0)}
+        institution={form.institution}
+        subtitle={[
+          [selectedUni?.city?.name, selectedUni?.country?.name].filter(Boolean).join(", "),
+          form.course,
+          form.campus,
+          `${form.commenceMonth} ${form.commenceYear}`.trim(),
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+        universityType={selectedUni?.university_type}
+        website={selectedUni?.website}
+        logoUrl={uniLogo}
       />
-
-      {/* ── Context banner ───────────────────────────────────────── */}
-      <div style={{ background: "linear-gradient(135deg,#0a1330,#16224e)", color: "#fff" }}>
-        <div
-          className="px-4 lg:px-7"
-          style={{
-            maxWidth: 1160,
-            margin: "0 auto",
-            paddingTop: 22,
-            paddingBottom: 22,
-            display: "flex",
-            alignItems: "center",
-            gap: 16,
-            flexWrap: "wrap",
-          }}
-        >
-          <div
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: 14,
-              background: "linear-gradient(135deg,#0e7490,#06b6d4)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#fff",
-              fontSize: 18,
-              fontWeight: 800,
-              flexShrink: 0,
-            }}
-          >
-            {form.institution.charAt(0)}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 16, fontWeight: 800 }}>{form.institution}</div>
-            <div style={{ fontSize: 13, opacity: 0.78, marginTop: 2 }}>
-              {form.course} &middot; {form.campus} &middot; {form.commenceMonth}{" "}
-              {form.commenceYear}
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* ── Main grid ────────────────────────────────────────────── */}
       <div
@@ -420,6 +425,7 @@ function ApplyPageInner() {
                 set={set}
                 universities={universities}
                 courses={courses}
+                intakes={intakes}
                 presetUniversity={presetUniversity}
                 loadCoursesForUni={loadCoursesForUni}
               />
