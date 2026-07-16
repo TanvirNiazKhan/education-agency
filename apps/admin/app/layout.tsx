@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "../components/sidebar";
-import { Header } from "../components/header";
 import { ThemeProvider } from "../lib/theme";
 import { SidebarProvider } from "../lib/sidebar";
+import { AuthProvider } from "../lib/auth";
+import { AuthenticatedLayout } from "../components/authenticated-layout";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,23 +37,11 @@ export default function RootLayout({
       </head>
       <body className="h-full">
         <ThemeProvider>
-          <SidebarProvider>
-            <div
-              className="flex h-screen w-full overflow-hidden"
-              style={{ background: "var(--c-bg)" }}
-            >
-              <Sidebar />
-              <div className="flex flex-1 flex-col min-w-0 h-full">
-                <Header />
-                <main
-                  className="flex-1 overflow-y-auto"
-                  style={{ background: "var(--c-bg)" }}
-                >
-                  {children}
-                </main>
-              </div>
-            </div>
-          </SidebarProvider>
+          <AuthProvider>
+            <SidebarProvider>
+              <AuthenticatedLayout>{children}</AuthenticatedLayout>
+            </SidebarProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

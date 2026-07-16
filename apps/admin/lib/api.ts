@@ -1,11 +1,27 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
+function getAuthHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const token = localStorage.getItem("admin_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json", ...options?.headers },
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+      ...options?.headers,
+    },
     ...options,
   });
   if (!res.ok) {
+    if (res.status === 401 && typeof window !== "undefined") {
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("admin_user");
+      window.location.href = "/login";
+      throw new Error("Session expired");
+    }
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || `API error ${res.status}`);
   }
@@ -492,6 +508,40 @@ export const dashboardApi = {
   stats: () => api.get<DashboardStats>('/admin/applications/dashboard/stats'),
 };
 
+export interface AdminUser {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  role: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface CreateAdminData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  password: string;
+}
+
+export const adminUsersApi = {
+  list: () => api.get<AdminUser[]>('/admin/users'),
+  create: (data: CreateAdminData) => api.post<AdminUser>('/admin/users', data),
+  activate: (id: string) => api.patch<AdminUser>(`/admin/users/${id}/activate`, {}),
+  deactivate: (id: string) => api.patch<AdminUser>(`/admin/users/${id}/deactivate`, {}),
+};
+
+export const authApi = {
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.patch<{ message: string }>('/auth/change-password', {
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
+};
+
 export const universityImagesApi = {
   list: (universityId: string) =>
     api.get<UniversityImage[]>(`/university-images?university_id=${universityId}`),
@@ -502,6 +552,7 @@ export const universityImagesApi = {
     files.forEach((f) => formData.append("images", f));
     const res = await fetch(`${API_BASE}/university-images`, {
       method: "POST",
+      headers: getAuthHeaders(),
       body: formData,
     });
     if (!res.ok) {

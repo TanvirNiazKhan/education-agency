@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from './repositories/user.repository';
-import { User } from './entities/user.entity';
+import { User, UserRole } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
@@ -18,11 +18,28 @@ export class UsersService {
     return this.userRepository.findByEmail(email);
   }
 
+  async findAllAdmins(): Promise<User[]> {
+    return this.userRepository.findByRoles([
+      UserRole.ADMIN,
+      UserRole.SUPER_ADMIN,
+    ]);
+  }
+
   async create(data: Partial<User>): Promise<User> {
     return this.userRepository.create(data);
   }
 
   async update(id: string, data: Partial<User>): Promise<User> {
     return this.userRepository.update(id, data) as Promise<User>;
+  }
+
+  async activate(id: string): Promise<User> {
+    const user = await this.findById(id);
+    return this.userRepository.setActive(user.id, true) as Promise<User>;
+  }
+
+  async deactivate(id: string): Promise<User> {
+    const user = await this.findById(id);
+    return this.userRepository.setActive(user.id, false) as Promise<User>;
   }
 }

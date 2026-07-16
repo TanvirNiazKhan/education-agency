@@ -5,6 +5,7 @@ import { Exclude } from 'class-transformer';
 export enum UserRole {
   STUDENT = 'student',
   ADMIN = 'admin',
+  SUPER_ADMIN = 'super_admin',
 }
 
 @Entity('users')

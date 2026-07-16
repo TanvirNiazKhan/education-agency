@@ -3,10 +3,12 @@
 import { Search, Plus, Bell, Moon, Sun, Menu } from "lucide-react";
 import { useTheme } from "../lib/theme";
 import { useSidebar } from "../lib/sidebar";
+import { useAuth } from "../lib/auth";
 
 export function Header() {
   const { theme, toggle } = useTheme();
   const { toggle: toggleSidebar } = useSidebar();
+  const { user } = useAuth();
 
   return (
     <header
@@ -115,7 +117,7 @@ export function Header() {
         className="hidden sm:flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-[8px] border-none text-[12px] font-semibold text-white"
         style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
       >
-        PR
+        {user ? `${user.first_name[0]}${user.last_name[0]}` : ""}
       </button>
     </header>
   );

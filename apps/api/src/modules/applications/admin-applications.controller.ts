@@ -9,6 +9,7 @@ import {
   Res,
   Redirect,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiTags } from '@nestjs/swagger';
@@ -18,11 +19,17 @@ import { ConfigService } from '@nestjs/config';
 import { createReadStream, existsSync } from 'fs';
 import { join } from 'path';
 import { StorageService } from '@modules/storage/storage.service';
+import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from '@modules/auth/guards/roles.guard';
+import { Roles } from '@modules/auth/decorators/roles.decorator';
+import { UserRole } from '@modules/users/entities/user.entity';
 import { ApplicationsService } from './applications.service';
 import { UpdateApplicationAdminDto, ChangeStatusDto } from './dto/update-application.dto';
 import { ApplicationDocument } from './entities/application-document.entity';
 
 @ApiTags('Admin Applications')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN)
 @Controller('admin/applications')
 export class AdminApplicationsController {
   constructor(

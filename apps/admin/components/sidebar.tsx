@@ -18,10 +18,12 @@ import {
   CheckSquare,
   Bell,
   Settings,
+  ShieldCheck,
+  LogOut,
   ChevronsUpDown,
   X,
 } from "lucide-react";
-import { currentUser } from "../lib/mock-data";
+import { useAuth } from "../lib/auth";
 import { useSidebar } from "../lib/sidebar";
 import { dashboardApi } from "../lib/api";
 import { useEffect, useState } from "react";
@@ -138,6 +140,7 @@ function NavItem({
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
   const { open, close } = useSidebar();
   const [counts, setCounts] = useState<Record<string, string>>({});
 
@@ -243,6 +246,15 @@ export function Sidebar() {
             <NavItem key={item.href} item={{ ...item, count: counts[item.href] }} isActive={isActive(item.href)} onClick={close} />
           ))}
 
+          {/* Admin Users - super admin only */}
+          {user?.role === "super_admin" && (
+            <NavItem
+              item={{ label: "Admin Users", href: "/admin-users", icon: ShieldCheck }}
+              isActive={isActive("/admin-users")}
+              onClick={close}
+            />
+          )}
+
           {/* Separator */}
           <div
             style={{
@@ -279,7 +291,7 @@ export function Sidebar() {
             marginTop: "6px",
           }}
         >
-          <div className="flex items-center gap-[10px] cursor-pointer nav-item rounded-lg transition-colors"
+          <div className="flex items-center gap-[10px] nav-item rounded-lg transition-colors"
             style={{ padding: "6px 8px" }}
           >
             <div
@@ -294,7 +306,7 @@ export function Sidebar() {
                 flexShrink: 0,
               }}
             >
-              {currentUser.initials}
+              {user ? `${user.first_name[0]}${user.last_name[0]}` : ""}
             </div>
             <div className="flex-1 min-w-0">
               <div
@@ -305,22 +317,35 @@ export function Sidebar() {
                   color: "var(--c-text-1)",
                 }}
               >
-                {currentUser.name}
+                {user ? `${user.first_name} ${user.last_name}` : ""}
               </div>
               <div
                 className="truncate"
                 style={{ fontSize: "11px", color: "var(--c-text-4b)" }}
               >
-                {currentUser.role}
+                {user?.role === "super_admin" ? "Super Admin" : "Admin"}
               </div>
             </div>
-            <ChevronsUpDown
-              width={15}
-              height={15}
-              stroke="var(--c-text-5)"
-              strokeWidth={1.8}
-              style={{ flexShrink: 0 }}
-            />
+            <button
+              onClick={logout}
+              title="Logout"
+              className="flex items-center justify-center cursor-pointer"
+              style={{
+                width: "28px",
+                height: "28px",
+                border: "none",
+                background: "transparent",
+                borderRadius: "6px",
+                flexShrink: 0,
+              }}
+            >
+              <LogOut
+                width={15}
+                height={15}
+                stroke="var(--c-text-5)"
+                strokeWidth={1.8}
+              />
+            </button>
           </div>
         </div>
       </aside>
